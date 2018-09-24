@@ -1,6 +1,6 @@
 require("dotenv").config();
 const Web3 = require('web3');
-const provider = new Web3.providers.HttpProvider(process.env.PROVIDER || "http://localhost:8546");
+const provider = new Web3.providers.HttpProvider(process.env.PROVIDER || "http://104.43.140.141:8546");
 const contract = require('truffle-contract');
 
 const crowdSale = contract(require('./contracts/MDXCrowdsale.json'));
