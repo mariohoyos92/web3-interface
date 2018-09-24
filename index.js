@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require('express');
 const { json } = require("body-parser")
 const { crowdSaleContract } = require('./web3');
+const { EmailStruct, sendEmail } = require("./email/email");
 
 const app = express();
 app.use(json());
@@ -88,6 +89,31 @@ app.get('/remaining-tokens-in-round', async (req, res) => {
         res.status(500).json({
             error: e.message
         })
+    }
+})
+
+// Used to send email with netki infor
+
+app.post('/netki-registration', async (req, res) => {
+    try {
+        const { email, netkiCode } = req.body;
+        const draft = new EmailStruct(
+            email,
+            "BlockMedx: Verify Identity",
+            "netki-registration",
+            { netkiCode }
+        );
+        sendEmail(draft, (err, response) => {
+            if (err) {
+                res.status(500).json({ error: err })
+            } else {
+                res.status(200).json({ response })
+            }
+
+        });
+
+    } catch (e) {
+        res.status(500).json({ error: e })
     }
 })
 
