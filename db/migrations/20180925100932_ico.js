@@ -5,8 +5,8 @@ exports.up = function (knex, Promise) {
             .increments("id")
             .unsigned()
             .primary();
-        table.string("email").notNullable();
-        table.string("netki_code").notNullable();
+        table.string("email").unique().notNullable();
+        table.string("netki_code").unique().notNullable();
         table
             .boolean("netki_approved")
             .notNullable()
