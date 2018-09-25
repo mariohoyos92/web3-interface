@@ -11,6 +11,7 @@ exports.up = function (knex, Promise) {
             .boolean("netki_approved")
             .notNullable()
             .defaultTo(false);
+        table.string("public_eth_address").nullable();
     })
 }
 
