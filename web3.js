@@ -14,4 +14,12 @@ crowdSale.defaults({
 })
 const crowdSaleContract = crowdSale.at(crowdSaleAddress).then(instance => instance);
 
-module.exports = { crowdSaleContract }
+
+async function getTransactions(address, callback) {
+    const instance = await crowdSaleContract;
+    instance.TokenPurchase({ beneficiary: address }, { fromBlock: 0, toBlock: 'latest' }).get((err, res) => {
+        callback(err, res)
+    });
+}
+
+module.exports = { crowdSaleContract, getTransactions }

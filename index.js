@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require('express');
 const { json } = require("body-parser")
-const { crowdSaleContract } = require('./web3');
+const { crowdSaleContract, getTransactions } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
 
 const app = express();
@@ -112,6 +112,35 @@ app.post('/netki-registration', async (req, res) => {
 
         });
 
+    } catch (e) {
+        res.status(500).json({ error: e })
+    }
+})
+
+
+// Used to get a transaction history of an address for the crowdsale
+
+app.get('/transaction-history/:publicAddress', async (req, res) => {
+    const { publicAddress } = req.params;
+    try {
+        await getTransactions(publicAddress, (err, txHistory) => {
+            if (err) {
+                res.status(500).json({ error: err })
+            }
+            else if (txHistory.length === 0) {
+                res.status(200).json({ transactions: [] })
+            } else {
+                const formattedTransactions = txHistory.map(tx => {
+                    return {
+                        purchaserAddress: tx.args.purchaser,
+                        beneficiaryAddress: tx.args.beneficiary,
+                        tokensPurchased: tx.args.amount.toString(),
+                        txHash: tx.transactionHash
+                    }
+                })
+                res.status(200).json({ transactions: formattedTransactions })
+            }
+        });
     } catch (e) {
         res.status(500).json({ error: e })
     }
