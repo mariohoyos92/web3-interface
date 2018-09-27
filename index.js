@@ -4,6 +4,8 @@ const { json } = require("body-parser")
 const { crowdSaleContract, getTransactions } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
 
+const { getAuthCodes, getTransaction } = require('./kyc-service');
+
 const app = express();
 app.use(json());
 
@@ -145,6 +147,15 @@ app.get('/transaction-history/:publicAddress', async (req, res) => {
         res.status(500).json({ error: e })
     }
 })
+
+
+getAuthCodes()
+    .then(codes => getTransaction(codes[0].code))
+    .then(console.log)
+    .catch(err => console.log(err));
+
+getTransaction('bmx6h6').then(console.log); //test transaction
+
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port: ${port}`))
