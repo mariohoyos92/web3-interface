@@ -3,47 +3,82 @@ const express = require('express');
 const { json } = require("body-parser")
 const { crowdSaleContract, getTransactions } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
-
+const { checkIfCodeInUse, addUsertoDB, getUserByEmail } = require("./utils/dbAcessors");
 const { getAuthCodes, getTransaction } = require('./kyc-service');
+
 
 const app = express();
 app.use(json());
 
-// Used to add an address to the whitelist
+// Used to send email with netki information
 
-app.post("/whitelist", async (req, res) => {
-    const { address } = req.body;
+app.post('/netki-registration', async (req, res) => {
     try {
-        const contractInstance = await crowdSaleContract;
-        const transactionInfo = await contractInstance.addAddressToWhitelist(address);
-        const isWhitelisted = await contractInstance.whitelist(address);
-        res.status(200).json({
-            transactionInfo,
-            isWhitelisted
-        })
+        const { email } = req.body;
+        const codes = await getAuthCodes();
+        for (let i = 0; i < codes.length; i++) {
+            let netkiCode = codes[i].code
+            const inUse = await checkIfCodeInUse(netkiCode);
+            if (!inUse) {
+                await addUsertoDB(email, netkiCode);
+                const draft = new EmailStruct(
+                    email,
+                    "BlockMedx: Verify Identity",
+                    "netki-registration",
+                    { netkiCode }
+                );
+                sendEmail(draft, (err, response) => {
+                    if (err) {
+                        res.status(500).json({ error: err })
+                    } else {
+                        res.status(200).json({ response })
+                    }
 
+                });
+                break;
+            }
+        }
     } catch (e) {
-        res.status(500).json({ error: e.message })
+        res.status(500).json({ error: e })
     }
 })
 
-// Used to remove an address from the whitelist
 
-app.delete("/whitelist/:address", async (req, res) => {
-    const { address } = req.params;
+// Used to get the netki status for a user by their email address
+
+app.get("/netki-status/:email", async (req, res) => {
+    const { email } = req.params;
+
     try {
-        const contractInstance = await crowdSaleContract;
-        const transactionInfo = await contractInstance.removeAddressFromWhitelist(address);
-        const isWhitelisted = await contractInstance.whitelist(address);
-        res.status(200).json({
-            transactionInfo,
-            isWhitelisted
-        })
-
-    } catch (e) {
-        res.status(500).json({ error: e.message })
+        const { netki_code, public_eth_address } = await getUserByEmail(email);
+        const status = await getTransaction(netki_code);
+        const formattedStatus = JSON.parse(status);
+        if (formattedStatus.results.length > 0) {
+            const userResults = formattedStatus.results[0];
+            const approvalStatus = userResults.state;
+            if (approvalStatus === "completed") {
+                const contractInstance = await crowdSaleContract;
+                let isWhitelisted = await contractInstance.whitelist(public_eth_address);
+                if (isWhitelisted) {
+                    res.status(200).json({ approvalStatus, isWhitelisted })
+                } else {
+                    await contractInstance.addAddressToWhitelist(public_eth_address);
+                    isWhitelisted = await contractInstance.whitelist(public_eth_address);
+                    res.status(200).json({ approvalStatus, isWhitelisted })
+                }
+            } else {
+                res.status(200).json({ approvalStatus, isWhitelisted: false })
+            }
+        }
+        else {
+            throw Error("No results available for that netki code yet")
+        }
+    } catch (error) {
+        res.status(500).json({ error })
     }
-});
+
+})
+
 
 // Used to check whether an address is whitelisted or not
 
@@ -61,7 +96,6 @@ app.get("/whitelist/:address", async (req, res) => {
         })
     }
 })
-
 // Used to get the total remaining tokens to be sold across all phases
 
 app.get("/total-remaining-tokens", async (req, res) => {
@@ -94,38 +128,15 @@ app.get('/remaining-tokens-in-round', async (req, res) => {
     }
 })
 
-// Used to send email with netki infor
-
-app.post('/netki-registration', async (req, res) => {
-    try {
-        const { email, netkiCode } = req.body;
-        const draft = new EmailStruct(
-            email,
-            "BlockMedx: Verify Identity",
-            "netki-registration",
-            { netkiCode }
-        );
-        sendEmail(draft, (err, response) => {
-            if (err) {
-                res.status(500).json({ error: err })
-            } else {
-                res.status(200).json({ response })
-            }
-
-        });
-
-    } catch (e) {
-        res.status(500).json({ error: e })
-    }
-})
 
 
 // Used to get a transaction history of an address for the crowdsale
 
-app.get('/transaction-history/:publicAddress', async (req, res) => {
-    const { publicAddress } = req.params;
+app.get('/transaction-history/:email', async (req, res) => {
+    const { email } = req.params;
     try {
-        await getTransactions(publicAddress, (err, txHistory) => {
+        const { public_eth_address } = await getUserByEmail(email);
+        await getTransactions(public_eth_address, (err, txHistory) => {
             if (err) {
                 res.status(500).json({ error: err })
             }
@@ -149,12 +160,13 @@ app.get('/transaction-history/:publicAddress', async (req, res) => {
 })
 
 
-getAuthCodes()
-    .then(codes => getTransaction(codes[0].code))
-    .then(console.log)
-    .catch(err => console.log(err));
 
-getTransaction('bmx6h6').then(console.log); //test transaction
+// getAuthCodes()
+//     .then(codes => getTransaction(codes[0].code))
+//     .then(console.log)
+//     .catch(err => console.log(err));
+
+// getTransaction('bmx6h6').then(console.log); //test transaction
 
 
 const port = process.env.PORT || 3001;
