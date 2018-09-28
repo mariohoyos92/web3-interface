@@ -3,7 +3,7 @@ const express = require('express');
 const { json } = require("body-parser")
 const { crowdSaleContract, getTransactions } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
-const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser } = require("./utils/dbAcessors");
+const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser, updateNetkiApprovedStatus } = require("./utils/dbAcessors");
 const { getAuthCodes, getTransaction } = require('./kyc-service');
 
 
@@ -90,6 +90,7 @@ app.get("/netki-status/:email", async (req, res) => {
                 } else {
                     await contractInstance.addAddressToWhitelist(public_eth_address);
                     isWhitelisted = await contractInstance.whitelist(public_eth_address);
+                    await updateNetkiApprovedStatus(email, isWhitelisted);
                     res.status(200).json({ approvalStatus, isWhitelisted })
                 }
             } else {
@@ -123,6 +124,35 @@ app.get("/whitelist/:email", async (req, res) => {
         })
     }
 })
+// Used to get a transaction history of an address for the crowdsale
+
+app.get('/transaction-history/:email', async (req, res) => {
+    const { email } = req.params;
+    try {
+        const { public_eth_address } = await getUserByEmail(email);
+        await getTransactions(public_eth_address, (err, txHistory) => {
+            if (err) {
+                res.status(500).json({ error: err })
+            }
+            else if (txHistory.length === 0) {
+                res.status(200).json({ transactions: [] })
+            } else {
+                const formattedTransactions = txHistory.map(tx => {
+                    return {
+                        purchaserAddress: tx.args.purchaser,
+                        beneficiaryAddress: tx.args.beneficiary,
+                        tokensPurchased: tx.args.amount.toString(),
+                        txHash: tx.transactionHash
+                    }
+                })
+                res.status(200).json({ transactions: formattedTransactions })
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ error: e })
+    }
+})
+
 // Used to get the total remaining tokens to be sold across all phases
 
 app.get("/total-remaining-tokens", async (req, res) => {
@@ -157,34 +187,6 @@ app.get('/remaining-tokens-in-round', async (req, res) => {
 
 
 
-// Used to get a transaction history of an address for the crowdsale
-
-app.get('/transaction-history/:email', async (req, res) => {
-    const { email } = req.params;
-    try {
-        const { public_eth_address } = await getUserByEmail(email);
-        await getTransactions(public_eth_address, (err, txHistory) => {
-            if (err) {
-                res.status(500).json({ error: err })
-            }
-            else if (txHistory.length === 0) {
-                res.status(200).json({ transactions: [] })
-            } else {
-                const formattedTransactions = txHistory.map(tx => {
-                    return {
-                        purchaserAddress: tx.args.purchaser,
-                        beneficiaryAddress: tx.args.beneficiary,
-                        tokensPurchased: tx.args.amount.toString(),
-                        txHash: tx.transactionHash
-                    }
-                })
-                res.status(200).json({ transactions: formattedTransactions })
-            }
-        });
-    } catch (e) {
-        res.status(500).json({ error: e })
-    }
-})
 
 
 

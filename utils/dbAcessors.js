@@ -17,4 +17,8 @@ async function addAddressToUser(email, publicAddress) {
     return knex("ico").update({ public_eth_address: publicAddress }).where({ email }).returning("*");
 }
 
-module.exports = { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser }
+async function updateNetkiApprovedStatus(email, status) {
+    return knex("ico").update({ netki_approved: status }).where({ email })
+}
+
+module.exports = { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser, updateNetkiApprovedStatus }
