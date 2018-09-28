@@ -3,7 +3,7 @@ const express = require('express');
 const { json } = require("body-parser")
 const { crowdSaleContract, getTransactions } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
-const { checkIfCodeInUse, addUsertoDB, getUserByEmail } = require("./utils/dbAcessors");
+const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser } = require("./utils/dbAcessors");
 const { getAuthCodes, getTransaction } = require('./kyc-service');
 
 
@@ -54,6 +54,19 @@ app.get('/user-profile/:email', async (req, res) => {
         res.status(500).json({
             error
         })
+    }
+})
+
+// Used to add a public address to a user's profile
+
+app.post("/user/publicAddress", async (req, res) => {
+    const { email, publicAddress } = req.body;
+    try {
+        const updatedUser = await addAddressToUser(email, publicAddress);
+        res.status(200).json({ updatedUser });
+    } catch (e) {
+        console.log(e)
+        res.status(500).json({ error: e })
     }
 })
 

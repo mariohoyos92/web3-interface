@@ -13,5 +13,8 @@ async function getUserByEmail(email) {
     return knex("ico").where({ email }).first();
 }
 
+async function addAddressToUser(email, publicAddress) {
+    return knex("ico").update({ public_eth_address: publicAddress }).where({ email }).returning("*");
+}
 
-module.exports = { checkIfCodeInUse, addUsertoDB, getUserByEmail }
+module.exports = { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser }
