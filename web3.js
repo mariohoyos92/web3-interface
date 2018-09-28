@@ -22,4 +22,7 @@ async function getTransactions(address, callback) {
     });
 }
 
+// Dummy function I've been using to buy tokens to see that amounts change
+// crowdSaleContract.then(instance => instance.buyTokens("0x662f8cA054558ce284d670c374C25C6a3312d3F7", { value: 13000000000000000000 }))
+
 module.exports = { crowdSaleContract, getTransactions }

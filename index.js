@@ -10,6 +10,8 @@ const { getAuthCodes, getTransaction } = require('./kyc-service');
 const app = express();
 app.use(json());
 
+const weiPerEth = 1000000000000000000
+
 // Used to send email with netki information
 
 app.post('/netki-registration', async (req, res) => {
@@ -141,7 +143,7 @@ app.get('/transaction-history/:email', async (req, res) => {
                     return {
                         purchaserAddress: tx.args.purchaser,
                         beneficiaryAddress: tx.args.beneficiary,
-                        tokensPurchased: tx.args.amount.toString(),
+                        tokensPurchased: Math.round(tx.args.amount / weiPerEth),
                         txHash: tx.transactionHash
                     }
                 })
@@ -160,7 +162,7 @@ app.get("/total-remaining-tokens", async (req, res) => {
         const contractInstance = await crowdSaleContract;
         const totalRemainingTokens = await contractInstance.totalRemainingTokens();
         res.status(200).json({
-            totalRemainingTokens
+            totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth)
         })
     } catch (e) {
         res.status(500).json({
@@ -176,7 +178,7 @@ app.get('/remaining-tokens-in-round', async (req, res) => {
         const contractInstance = await crowdSaleContract;
         const remainingTokensInRound = await contractInstance.roundRemainingTokens();
         res.status(200).json({
-            remainingTokensInRound
+            remainingTokensInRound: Math.floor(remainingTokensInRound / weiPerEth)
         })
     } catch (e) {
         res.status(500).json({
