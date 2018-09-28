@@ -82,11 +82,12 @@ app.get("/netki-status/:email", async (req, res) => {
 
 // Used to check whether an address is whitelisted or not
 
-app.get("/whitelist/:address", async (req, res) => {
+app.get("/whitelist/:email", async (req, res) => {
     try {
-        const { address } = req.params;
+        const { email } = req.params;
+        const { public_eth_address } = await getUserByEmail(email);
         const contractInstance = await crowdSaleContract;
-        const isWhitelisted = await contractInstance.whitelist(address);
+        const isWhitelisted = await contractInstance.whitelist(public_eth_address);
         res.status(200).json({
             isWhitelisted
         })
