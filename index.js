@@ -43,6 +43,19 @@ app.post('/netki-registration', async (req, res) => {
     }
 })
 
+// Used to get the profile information for a user via email
+
+app.get('/user-profile/:email', async (req, res) => {
+    const { email } = req.params;
+    try {
+        const profile = await getUserByEmail(email);
+        res.status(200).json({ profile })
+    } catch (error) {
+        res.status(500).json({
+            error
+        })
+    }
+})
 
 // Used to get the netki status for a user by their email address
 
