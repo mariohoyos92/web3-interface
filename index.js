@@ -211,10 +211,29 @@ app.get('/crowdsale-stats', async (req, res) => {
     try {
         const contractInstance = await crowdSaleContract;
         const weiRaised = await contractInstance.weiRaised();
-        const tokensSold = await contractInstance.tokensSold()
+        const wanRaised = Math.floor(weiRaised / weiPerEth)
+        const tokensSold = await contractInstance.tokensSold();
+        const crowdSaleBeingTimeStamp = 1538956800000;
+        const timeElapsedSinceCrowdSaleStarted = Date.now() - crowdSaleBeingTimeStamp;
+        const twoWeeks = 1000 * 60 * 60 * 24 * 14
+        let currentRound, mdxPerWei;
+        if (wanRaised > 44000000 || timeElapsedSinceCrowdSaleStarted > twoWeeks) {
+            if (wanRaised > 44000000 + 15500000 || timeElapsedSinceCrowdSaleStarted > twoWeeks * 2) {
+                currentRound = 3;
+                mdxPerWei = 112;
+            } else {
+                currentRound = 2;
+                mdxPerWei = 124;
+            }
+        } else {
+            currentRound = 1;
+            mdxPerWei = 176;
+        }
         res.status(200).json({
-            wanRaised: Math.floor(weiRaised / weiPerEth),
-            tokensSold: Math.floor(tokensSold / weiPerEth)
+            wanRaised,
+            tokensSold: Math.floor(tokensSold / weiPerEth),
+            currentRound,
+            mdxPerWei
         })
     } catch (e) {
         res.status(500).json({
