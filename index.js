@@ -205,7 +205,23 @@ app.get('/remaining-tokens-in-round', async (req, res) => {
     }
 })
 
+// Used to get Crowdsale stats
 
+app.get('/crowdsale-stats', async (req, res) => {
+    try {
+        const contractInstance = await crowdSaleContract;
+        const weiRaised = await contractInstance.weiRaised();
+        const tokensSold = await contractInstance.tokensSold()
+        res.status(200).json({
+            wanRaised: Math.floor(weiRaised / weiPerEth),
+            tokensSold: Math.floor(tokensSold / weiPerEth)
+        })
+    } catch (e) {
+        res.status(500).json({
+            error: e.message
+        })
+    }
+})
 
 
 
