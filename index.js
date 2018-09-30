@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require('express');
 const { json } = require("body-parser")
-const { crowdSaleContract, getTransactions } = require('./web3');
+const { crowdSaleContract, getTransactions, tokenContract } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
 const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser, updateNetkiApprovedStatus } = require("./utils/dbAcessors");
 const { getAuthCodes, getTransaction } = require('./kyc-service');
@@ -152,6 +152,24 @@ app.get('/transaction-history/:email', async (req, res) => {
         });
     } catch (e) {
         res.status(500).json({ error: e })
+    }
+})
+
+// Used to retrieve MDX balance for an address by email
+
+app.get("/mdx-balance/:email", async (req, res) => {
+    try {
+        const { email } = req.params;
+        const { public_eth_address } = await getUserByEmail(email);
+        const tokenInstance = await tokenContract;
+        const MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+        res.status(200).json({
+            MDXBalance: Math.floor(MDXBalance / weiPerEth)
+        })
+    } catch (e) {
+        res.status(500).json({
+            error: e.message
+        })
     }
 })
 
