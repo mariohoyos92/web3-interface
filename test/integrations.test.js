@@ -17,22 +17,101 @@ describe("Test Endpoints", () => {
             })
     });
 
-    describe("GET /crowdsale-stats", () => {
-        it("Should retrieve stats for the deployed crowdsale contract", done => {
+    describe("Get a users profile, add a public address to account,", () => {
+        let email = "test@gmail.com";
+        let netkiCode = "abcdef"
+        let address = "0xlaksjdflkjsladkfjlaskdfjlskdjflksdjf"
+        beforeEach(() => {
+            return knex("ico").insert({ email, netki_code: netkiCode })
+        })
+
+        it("Should retrieve a users profile by email", done => {
             chai
                 .request(server)
-                .get("/crowdsale-stats")
+                .get("/user-profile/" + email)
                 .end((err, res) => {
                     should.not.exist(err);
                     res.redirects.length.should.eql(0);
                     res.status.should.eql(200);
                     res.type.should.eql("application/json");
-                    res.body.should.include.keys("wanRaised", "currentRound", "tokensSold", "mdxPerWan");
+                    res.body.profile.should.include.keys("email", "netki_code", "public_eth_address", "netki_approved");
+                    res.body.profile.email.should.eql(email);
+                    res.body.profile.netki_code.should.eql(netkiCode);
+                    res.body.profile.netki_approved.should.eql(false)
                     done();
                 });
-        });
-    });
+        })
 
+        it("Should add a public address to an existing account", done => {
+            chai
+                .request(server)
+                .post("/user/publicAddress")
+                .send({
+                    email,
+                    publicAddress: address
+                })
+                .end((err, res) => {
+                    should.not.exist(err);
+                    res.redirects.length.should.eql(0);
+                    res.status.should.eql(200);
+                    res.type.should.eql("application/json");
+                    res.body.should.include.keys("updatedUser");
+                    res.body.updatedUser.public_eth_address.should.eql(address)
+                    done();
+                });
+        })
+    })
+})
+
+describe("GET /total-remaining-tokens", () => {
+    it("Should retrieve stats for the deployed crowdsale contract", done => {
+        chai
+            .request(server)
+            .get("/total-remaining-tokens")
+            .end((err, res) => {
+                should.not.exist(err);
+                res.redirects.length.should.eql(0);
+                res.status.should.eql(200);
+                res.type.should.eql("application/json");
+                res.body.should.include.keys("totalRemainingTokens");
+                (typeof res.body.totalRemainingTokens).should.eql("number")
+                done();
+            });
+    });
+});
+
+describe("GET /remaining-tokens-in-round", () => {
+    it("Should retrieve stats for the deployed crowdsale contract", done => {
+        chai
+            .request(server)
+            .get("/remaining-tokens-in-round")
+            .end((err, res) => {
+                should.not.exist(err);
+                res.redirects.length.should.eql(0);
+                res.status.should.eql(200);
+                res.type.should.eql("application/json");
+                res.body.should.include.keys("remainingTokensInRound");
+                (typeof res.body.remainingTokensInRound).should.eql("number")
+                done();
+            });
+    });
+});
+
+describe("GET /crowdsale-stats", () => {
+    it("Should retrieve stats for the deployed crowdsale contract", done => {
+        chai
+            .request(server)
+            .get("/crowdsale-stats")
+            .end((err, res) => {
+                should.not.exist(err);
+                res.redirects.length.should.eql(0);
+                res.status.should.eql(200);
+                res.type.should.eql("application/json");
+                res.body.should.include.keys("wanRaised", "currentRound", "tokensSold", "mdxPerWan");
+                done();
+            });
+    });
+});
     // describe("POST /auth/login", () => {
     //     it("should login a user", done => {
     //         chai
@@ -501,4 +580,3 @@ describe("Test Endpoints", () => {
     //             });
     //     });
     // });
-});

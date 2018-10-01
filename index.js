@@ -36,6 +36,7 @@ app.get("/netki-status/:email", netkiStatusFetcher);
 // Used to check whether an address is whitelisted or not
 
 app.get("/whitelist/:email", checkIfWhitelisted);
+
 // Used to get a transaction history of an address for the crowdsale
 
 app.get("/transaction-history/:email", getTransactionHistory);
