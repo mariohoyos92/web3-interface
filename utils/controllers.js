@@ -163,7 +163,7 @@ async function getUserProfile(req, res) {
 async function addAddressToProfile(req, res) {
   const { email, publicAddress } = req.body;
   try {
-    const updatedUser = await addAddressToUser(email, publicAddress);
+    const [updatedUser] = await addAddressToUser(email, publicAddress);
     res.status(200).json({ updatedUser });
   } catch (e) {
     console.log(e);
