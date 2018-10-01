@@ -14,14 +14,43 @@ function makeHeaders(token) {
 
 function getTransaction(authCode) {
     const transaction_uri = uri + `transactions/?search=${authCode}`;
-    
+
     return new Promise((resolve, reject) => {
         getBearerToken().then(token => {
             const headers = makeHeaders(token);
-            request.get(transaction_uri, {headers}, (err, resp, body) => !err ? resolve(body) : reject(err));
+            request.get(transaction_uri, { headers }, (err, resp, body) => !err ? resolve(body) : reject(err));
         });
     });
 }
+
+function getCodeHistory(authCode) {
+    return new Promise(function (resolve, reject) {
+        return getBearerToken().then((token) => {
+            const business_uri = uri + 'business/businesses/'
+            const headers = makeHeaders(token);
+            request.get(business_uri, { headers }, function (err, resp, body) {
+                if (!err) {
+                    const business_id = JSON.parse(body).results[0].id;
+                    const access_codes_uri = business_uri + business_id + '/access-codes/' + authCode;
+
+                    request.get(access_codes_uri, { headers }, function (err, resp, body) {
+                        if (!err) {
+
+                            const code = JSON.parse(body)
+                            resolve(code);
+                        } else {
+                            reject(err);
+                        }
+                    })
+                } else {
+                    reject(err);
+                }
+            });
+        }).catch(reject);
+    });
+}
+
+// getCodeHistory('bmxjeb').then(e => console.log(e));
 
 function getBearerToken() {
     return new Promise((resolve, reject) => {
@@ -74,5 +103,5 @@ function getAuthCodes() {
 }
 
 
-module.exports = { getAuthCodes, getTransaction }
+module.exports = { getAuthCodes, getTransaction, getCodeHistory }
 
