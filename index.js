@@ -3,8 +3,9 @@ const express = require('express');
 const { json } = require("body-parser")
 const { crowdSaleContract, getTransactions, tokenContract } = require('./web3');
 const { EmailStruct, sendEmail } = require("./email/email");
-const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser, updateNetkiApprovedStatus } = require("./utils/dbAcessors");
-const { getAuthCodes, getTransaction } = require('./kyc-service');
+const { checkIfCodeInUse, addUsertoDB, getUserByEmail, addAddressToUser } = require("./utils/dbAcessors");
+const { getAuthCodes } = require('./kyc-service');
+const { netkiStatusFetcher } = require("./utils/controllers")
 
 
 const app = express();
@@ -74,40 +75,7 @@ app.post("/user/publicAddress", async (req, res) => {
 
 // Used to get the netki status for a user by their email address
 
-app.get("/netki-status/:email", async (req, res) => {
-    const { email } = req.params;
-
-    try {
-        const { netki_code, public_eth_address } = await getUserByEmail(email);
-        const status = await getTransaction(netki_code);
-        const formattedStatus = JSON.parse(status);
-        if (formattedStatus.results.length > 0) {
-            const userResults = formattedStatus.results[0];
-            const approvalStatus = userResults.state;
-            if (approvalStatus === "completed") {
-                const contractInstance = await crowdSaleContract;
-                let isWhitelisted = await contractInstance.whitelist(public_eth_address);
-                if (isWhitelisted) {
-                    res.status(200).json({ approvalStatus, isWhitelisted })
-                } else {
-                    await contractInstance.addAddressToWhitelist(public_eth_address);
-                    isWhitelisted = await contractInstance.whitelist(public_eth_address);
-                    await updateNetkiApprovedStatus(email, isWhitelisted);
-                    res.status(200).json({ approvalStatus, isWhitelisted })
-                }
-            } else {
-                res.status(200).json({ approvalStatus, isWhitelisted: false })
-            }
-        }
-        else {
-            throw Error("No results available for that netki code yet")
-        }
-    } catch (error) {
-        res.status(500).json({ error })
-    }
-
-})
-
+app.get("/netki-status/:email", netkiStatusFetcher)
 
 // Used to check whether an address is whitelisted or not
 
