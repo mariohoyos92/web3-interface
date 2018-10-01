@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc ./node_modules/mocha/bin/_mocha"
   },
   "author": "",
   "license": "ISC",
@@ -13,13 +13,24 @@
     "axios": "^0.18.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "knex": "^0.15.2",
+    "mocha": "^5.2.0",
     "mustache": "^3.0.0",
+    "nyc": "^13.0.1",
     "pg": "^7.4.3",
     "request": "^2.88.0",
     "truffle-contract": "^3.0.6",
     "web3": "^0.20.1"
+  },
+  "nyc": {
+    "exclude": [
+      "knexfile.js",
+      "db",
+      "test"
+    ]
   }
 }
