@@ -30,6 +30,12 @@ async function getEverything(req, res) {
     const isValidAddress = isAddress(public_eth_address);
     const tokenInstance = await tokenContract;
     const contractInstance = await crowdSaleContract;
+    let netkiApprovalStatus = await checkNetkiStatus(
+      netki_code,
+      email,
+      public_eth_address,
+      contractInstance
+    );
     let isWhitelisted, MDXBalance, transactionHistory, wanBalance;
     if (isValidAddress) {
       isWhitelisted = await contractInstance.whitelist(public_eth_address);
@@ -60,12 +66,6 @@ async function getEverything(req, res) {
       MDXBalance = 0;
       transactionHistory = [];
     }
-    let netkiApprovalStatus = await checkNetkiStatus(
-      netki_code,
-      email,
-      public_eth_address,
-      contractInstance
-    );
     res
       .status(200)
       .json({
@@ -324,6 +324,7 @@ async function checkNetkiStatus(
   publicEthAddress,
   contractInstance
 ) {
+  if (!netkiCode) return "No netki code associated with user";
   try {
     const status = await getTransaction(netkiCode);
     const formattedStatus = JSON.parse(status);
@@ -331,7 +332,7 @@ async function checkNetkiStatus(
     if (formattedStatus.results.length > 0) {
       const userResults = formattedStatus.results[0];
       approvalStatus = userResults.state;
-      if (approvalStatus === "completed") {
+      if (approvalStatus === "completed" && publicEthAddress) {
         isWhitelisted = await contractInstance.whitelist(publicEthAddress);
         if (!isWhitelisted) {
           await contractInstance.addAddressToWhitelist(publicEthAddress);
