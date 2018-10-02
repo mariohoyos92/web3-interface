@@ -58,10 +58,9 @@ async function netkiStatusFetcher(req, res) {
         res.status(200).json({ approvalStatus, isWhitelisted: false });
       }
     } else {
-      throw Error("No definitive results for that user yet");
+      res.status(200).json({ approvalStatus: "Hasn't started netki process" });
     }
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: error.message });
   }
 }
