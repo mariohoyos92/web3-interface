@@ -36,13 +36,13 @@ const tokenContract = token.at(tokenContractAddress).then(instance => instance);
 
 async function getTransactions(address, callback) {
   const instance = await crowdSaleContract;
-  instance
+  return instance
     .TokenPurchase(
       { beneficiary: address },
       { fromBlock: 0, toBlock: "latest" }
     )
     .get((err, res) => {
-      callback(err, res);
+      return callback(err, res);
     });
 }
 
@@ -55,7 +55,7 @@ async function getBalance(address) {
 }
 
 // Dummy function I've been using to buy tokens to see that amounts change
-// crowdSaleContract.then(instance => instance.buyTokens("0x662f8cA054558ce284d670c374C25C6a3312d3F7", { value: 13000000000000000000 }))
+// crowdSaleContract.then(instance => instance.buyTokens("0xd03ea8624c8c5987235048901fb614fdca89b117", { value: 130000000000000000000 }))
 
 module.exports = {
   crowdSaleContract,

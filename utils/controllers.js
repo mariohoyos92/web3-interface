@@ -36,30 +36,13 @@ async function getEverything(req, res) {
       public_eth_address,
       contractInstance
     );
-    let isWhitelisted, MDXBalance, transactionHistory, wanBalance;
+    let isWhitelisted, MDXBalance, wanBalance;
     if (isValidAddress) {
       isWhitelisted = await contractInstance.whitelist(public_eth_address);
       MDXBalance = await tokenInstance.balanceOf(public_eth_address);
       wanBalance = await getBalance(public_eth_address);
       if (MDXBalance && isWhitelisted) {
-        transactionHistory = await getTransactions(
-          public_eth_address,
-          (err, txHistory) => {
-            if (err) {
-              throw err;
-            } else {
-              const formattedTransactions = txHistory.map(tx => {
-                return {
-                  purchaserAddress: tx.args.purchaser,
-                  beneficiaryAddress: tx.args.beneficiary,
-                  tokensPurchased: Math.round(tx.args.amount / weiPerEth),
-                  txHash: tx.transactionHash
-                };
-              });
-              transactionHistory = formattedTransactions;
-            }
-          }
-        );
+        transactionHistory = await txHistoryFetcher(public_eth_address, this)
       }
     } else {
       isWhitelisted = false;
@@ -283,38 +266,29 @@ module.exports = {
 
 async function statsFetcher() {
   const contractInstance = await crowdSaleContract;
+  const [totalRemainingTokens,
+    remainingTokensInRound,
+    timeRemainingInRound,
+    currentRound] = await contractInstance.getInfo();
   const weiRaised = await contractInstance.weiRaised();
   const wanRaised = Math.floor(weiRaised / weiPerEth);
   const tokensSold = await contractInstance.tokensSold();
-  const crowdSaleBeingTimeStamp = 1538956800000;
-  const timeElapsedSinceCrowdSaleStarted = Date.now() - crowdSaleBeingTimeStamp;
-  const twoWeeks = 1000 * 60 * 60 * 24 * 14;
-  let currentRound, mdxPerWan;
-  if (wanRaised > 44000000 || timeElapsedSinceCrowdSaleStarted > twoWeeks) {
-    if (
-      wanRaised > 44000000 + 15500000 ||
-      timeElapsedSinceCrowdSaleStarted > twoWeeks * 2
-    ) {
-      currentRound = 3;
-      mdxPerWan = 11.2;
-    } else {
-      currentRound = 2;
-      mdxPerWan = 12.4;
-    }
-  } else {
-    currentRound = 1;
+  let mdxPerWan;
+  if (currentRound == 0) {
     mdxPerWan = 17.6;
+  } else if (currentRound == 1) {
+    mdxPerWan = 11.2
+  } else {
+    mdxPerWan = 12.4
   }
-  const remainingTokensInRound = await contractInstance.roundRemainingTokens();
-  const totalRemainingTokens = await contractInstance.totalRemainingTokens();
-
   return {
     wanRaised,
     tokensSold: Math.floor(tokensSold / weiPerEth),
     currentRound,
     mdxPerWan,
     remainingTokensInRound: Math.floor(remainingTokensInRound / weiPerEth),
-    totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth)
+    totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth),
+    timeRemainingInRound: parseInt(timeRemainingInRound)
   };
 }
 
@@ -357,4 +331,27 @@ async function checkNetkiStatus(
   } catch (error) {
     throw error;
   }
+}
+
+async function txHistoryFetcher(publicEthAddress) {
+  return new Promise((resolve, reject) => {
+    getTransactions(
+      publicEthAddress,
+      (err, txHistory) => {
+        if (err) {
+          resolve([])
+        } else {
+          const formattedTransactions = txHistory.map(tx => {
+            return {
+              purchaserAddress: tx.args.purchaser,
+              beneficiaryAddress: tx.args.beneficiary,
+              tokensPurchased: Math.round(tx.args.amount / weiPerEth),
+              txHash: tx.transactionHash
+            };
+          });
+          resolve(formattedTransactions)
+        }
+      }
+    )
+  })
 }
