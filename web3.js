@@ -3,7 +3,7 @@ const Web3 = require("web3");
 const provider = new Web3.providers.HttpProvider(
   process.env.PROVIDER || "http://104.43.140.141:8546"
 );
-const web3Lib = new Web3();
+const web3Lib = new Web3(provider);
 const contract = require("truffle-contract");
 
 const crowdSale = contract(require("./contracts/MDXCrowdsale.json"));
@@ -50,6 +50,10 @@ function isAddress(address) {
   return web3Lib.isAddress(address);
 }
 
+async function getBalance(address) {
+  return web3Lib.eth.getBalance(address);
+}
+
 // Dummy function I've been using to buy tokens to see that amounts change
 // crowdSaleContract.then(instance => instance.buyTokens("0x662f8cA054558ce284d670c374C25C6a3312d3F7", { value: 13000000000000000000 }))
 
@@ -57,5 +61,6 @@ module.exports = {
   crowdSaleContract,
   tokenContract,
   getTransactions,
-  isAddress
+  isAddress,
+  getBalance
 };

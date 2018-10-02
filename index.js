@@ -11,7 +11,8 @@ const {
   getTransactionHistory,
   getMDXBalance,
   checkIfAddressIsValid,
-  getEverything
+  getEverything,
+  getWanBalance
 } = require("./utils/controllers");
 
 const app = express();
@@ -56,6 +57,10 @@ app.get("/mdx-balance/:email", getMDXBalance);
 // Used to get Crowdsale stats
 
 app.get("/crowdsale-stats", getCrowdSaleStats);
+
+// Used to get WAN balance
+
+app.get("/wan-balance/:address", getWanBalance)
 
 // Used to handle callbacks from netki
 

@@ -15,7 +15,8 @@ const {
   crowdSaleContract,
   getTransactions,
   tokenContract,
-  isAddress
+  isAddress,
+  getBalance
 } = require("../web3");
 const { EmailStruct, sendEmail } = require("../email/email");
 
@@ -27,12 +28,13 @@ async function getEverything(req, res) {
     const { public_eth_address, netki_code } = await getUserByEmail(email);
     const stats = await statsFetcher();
     const isValidAddress = isAddress(public_eth_address);
-    let isWhitelisted, MDXBalance, transactionHistory;
-    const contractInstance = await crowdSaleContract;
     const tokenInstance = await tokenContract;
+    const contractInstance = await crowdSaleContract;
+    let isWhitelisted, MDXBalance, transactionHistory, wanBalance;
     if (isValidAddress) {
       isWhitelisted = await contractInstance.whitelist(public_eth_address);
       MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+      wanBalance = await getBalance(public_eth_address);
       if (MDXBalance && isWhitelisted) {
         transactionHistory = await getTransactions(
           public_eth_address,
@@ -71,6 +73,7 @@ async function getEverything(req, res) {
         publicEthAddress: public_eth_address,
         isValidAddress,
         isWhitelisted,
+        wanBalance: Math.floor(wanBalance / weiPerEth),
         MDXBalance: Math.floor(MDXBalance / weiPerEth),
         transactions: transactionHistory,
         approvalStatus: netkiApprovalStatus
@@ -254,6 +257,16 @@ function checkIfAddressIsValid(req, res) {
     : res.status(500).json({ error: "Please provide address" });
 }
 
+async function getWanBalance(req, res) {
+  try {
+    const wanBalance = await getBalance(req.params.address);
+    res.status(200).json({ wanBalance: Math.floor(wanBalance / weiPerEth) })
+  } catch (error) {
+    res.status(500).json({ error: error.messgae })
+  }
+
+}
+
 module.exports = {
   netkiStatusFetcher,
   getCrowdSaleStats,
@@ -264,7 +277,8 @@ module.exports = {
   getTransactionHistory,
   getMDXBalance,
   checkIfAddressIsValid,
-  getEverything
+  getEverything,
+  getWanBalance
 };
 
 async function statsFetcher() {
