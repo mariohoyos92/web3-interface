@@ -27,7 +27,7 @@ app.post("/user/publicAddress", addAddressToProfile);
 
 // Master endpoint to return all of the information for a user/crowdsale info
 
-app.get("/everything/:email", getEverything)
+app.get("/everything/:email", getEverything);
 
 // Used to get the profile information for a user via email
 
@@ -47,7 +47,7 @@ app.get("/transaction-history/:email", getTransactionHistory);
 
 // Used to check if provided address is valid
 
-app.get("/is-valid-address/:address", checkIfAddressIsValid)
+app.get("/is-valid-address/:address", checkIfAddressIsValid);
 
 // Used to retrieve MDX balance for an address by email
 
@@ -60,7 +60,7 @@ app.get("/crowdsale-stats", getCrowdSaleStats);
 // Used to handle callbacks from netki
 
 app.post("/callback", async (req, res) => {
-  res.status(200).json({ status: "success" })
+  res.status(200).json({ status: "success" });
   // find netki-code in body
   // find status in body
   // pull user out of db by netki-code
@@ -70,15 +70,13 @@ app.post("/callback", async (req, res) => {
   //    if there is a user, change netki-approved to true
   //    if that user has an ethereum address go ahead and whitelist it now
   //    send an email to the user letting them know they've been approved with directions on what to do next
-  //    
+  //
   // if status === failed
   //    change netki-approved to false
   //    send email to user about rejection OR send email to Michael to check in dashboard for restarting OR both.
-})
-
-
+});
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port: ${port}`));
 
-module.exports = app
+module.exports = app;
