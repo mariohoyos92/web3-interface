@@ -11,7 +11,8 @@ const {
   checkIfWhitelisted,
   getTransactionHistory,
   getMDXBalance,
-  getTotalRemainingTokens
+  getTotalRemainingTokens,
+  checkIfAddressIsValid
 } = require("./utils/controllers");
 
 const app = express();
@@ -40,6 +41,10 @@ app.get("/whitelist/:email", checkIfWhitelisted);
 // Used to get a transaction history of an address for the crowdsale
 
 app.get("/transaction-history/:email", getTransactionHistory);
+
+// Used to check if provided address is valid
+
+app.get("/is-valid-address/:address", checkIfAddressIsValid)
 
 // Used to retrieve MDX balance for an address by email
 
@@ -75,6 +80,8 @@ app.post("/callback", async (req, res) => {
   //    change netki-approved to false
   //    send email to user about rejection OR send email to Michael to check in dashboard for restarting OR both.
 })
+
+
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port: ${port}`));

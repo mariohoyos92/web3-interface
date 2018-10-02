@@ -3,12 +3,16 @@ const Web3 = require("web3");
 const provider = new Web3.providers.HttpProvider(
   process.env.PROVIDER || "http://104.43.140.141:8546"
 );
+const web3Lib = new Web3();
 const contract = require("truffle-contract");
 
 const crowdSale = contract(require("./contracts/MDXCrowdsale.json"));
 const token = contract(require("./contracts/MDXToken.json"));
 crowdSale.setProvider(provider);
 token.setProvider(provider);
+
+
+
 // Addresses from deterministic ganache_cli blockchain
 const crowdSaleOwnerAddress =
   process.env.CROWDSALE_OWNER_ADDRESS ||
@@ -44,7 +48,11 @@ async function getTransactions(address, callback) {
     });
 }
 
+function isAddress(address) {
+  return web3Lib.isAddress(address)
+}
+
 // Dummy function I've been using to buy tokens to see that amounts change
 // crowdSaleContract.then(instance => instance.buyTokens("0x662f8cA054558ce284d670c374C25C6a3312d3F7", { value: 13000000000000000000 }))
 
-module.exports = { crowdSaleContract, tokenContract, getTransactions };
+module.exports = { crowdSaleContract, tokenContract, getTransactions, isAddress };

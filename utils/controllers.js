@@ -14,7 +14,8 @@ const {
 const {
   crowdSaleContract,
   getTransactions,
-  tokenContract
+  tokenContract,
+  isAddress
 } = require("../web3");
 const { EmailStruct, sendEmail } = require("../email/email");
 
@@ -243,6 +244,11 @@ async function getTotalRemainingTokens(req, res) {
   }
 }
 
+function checkIfAddressIsValid(req, res) {
+  const { address } = req.params;
+  address ? res.status(200).json({ isValid: isAddress(address) }) : res.status(500).json({ error: "Please provide address" })
+}
+
 module.exports = {
   netkiStatusFetcher,
   getCrowdSaleStats,
@@ -253,5 +259,6 @@ module.exports = {
   checkIfWhitelisted,
   getTransactionHistory,
   getMDXBalance,
-  getTotalRemainingTokens
+  getTotalRemainingTokens,
+  checkIfAddressIsValid
 };
