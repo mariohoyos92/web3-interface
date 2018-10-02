@@ -21,6 +21,48 @@ const { EmailStruct, sendEmail } = require("../email/email");
 
 const weiPerEth = 1000000000000000000;
 
+async function getEverything(req, res) {
+  const { email } = req.params;
+  try {
+    const { public_eth_address, netki_code } = await getUserByEmail(email);
+    const stats = await statsFetcher();
+    const isValidAddress = isAddress(public_eth_address)
+    let isWhitelisted, MDXBalance, transactionHistory;
+    const contractInstance = await crowdSaleContract;
+    const tokenInstance = await tokenContract;
+    if (isValidAddress) {
+      isWhitelisted = await contractInstance.whitelist(public_eth_address);
+      MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+      if (MDXBalance && isWhitelisted) {
+        transactionHistory = await getTransactions(public_eth_address, (err, txHistory) => {
+          if (err) {
+            throw err;
+          } else {
+            const formattedTransactions = txHistory.map(tx => {
+              return {
+                purchaserAddress: tx.args.purchaser,
+                beneficiaryAddress: tx.args.beneficiary,
+                tokensPurchased: Math.round(tx.args.amount / weiPerEth),
+                txHash: tx.transactionHash
+              };
+            });
+            transactionHistory = formattedTransactions;
+          }
+        });
+      }
+    } else {
+      isWhitelisted = false;
+      MDXBalance = 0;
+      transactionHistory = [];
+    }
+    let netkiApprovalStatus = await checkNetkiStatus(netki_code, email, public_eth_address, contractInstance);
+    res.status(200).json({ crowdSaleStats: stats, publicEthAddress: public_eth_address, isValidAddress, isWhitelisted, MDXBalance: Math.floor(MDXBalance / weiPerEth), transactions: transactionHistory, approvalStatus: netkiApprovalStatus })
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ e })
+  }
+}
+
 async function netkiStatusFetcher(req, res) {
   const { email } = req.params;
 
@@ -67,50 +109,8 @@ async function netkiStatusFetcher(req, res) {
 
 async function getCrowdSaleStats(req, res) {
   try {
-    const contractInstance = await crowdSaleContract;
-    const weiRaised = await contractInstance.weiRaised();
-    const wanRaised = Math.floor(weiRaised / weiPerEth);
-    const tokensSold = await contractInstance.tokensSold();
-    const crowdSaleBeingTimeStamp = 1538956800000;
-    const timeElapsedSinceCrowdSaleStarted =
-      Date.now() - crowdSaleBeingTimeStamp;
-    const twoWeeks = 1000 * 60 * 60 * 24 * 14;
-    let currentRound, mdxPerWan;
-    if (wanRaised > 44000000 || timeElapsedSinceCrowdSaleStarted > twoWeeks) {
-      if (
-        wanRaised > 44000000 + 15500000 ||
-        timeElapsedSinceCrowdSaleStarted > twoWeeks * 2
-      ) {
-        currentRound = 3;
-        mdxPerWan = 11.2;
-      } else {
-        currentRound = 2;
-        mdxPerWan = 12.4;
-      }
-    } else {
-      currentRound = 1;
-      mdxPerWan = 17.6;
-    }
-    res.status(200).json({
-      wanRaised,
-      tokensSold: Math.floor(tokensSold / weiPerEth),
-      currentRound,
-      mdxPerWan
-    });
-  } catch (e) {
-    res.status(500).json({
-      error: e.message
-    });
-  }
-}
-
-async function getRemainingTokensInRound(req, res) {
-  try {
-    const contractInstance = await crowdSaleContract;
-    const remainingTokensInRound = await contractInstance.roundRemainingTokens();
-    res.status(200).json({
-      remainingTokensInRound: Math.floor(remainingTokensInRound / weiPerEth)
-    });
+    const stats = await statsFetcher()
+    res.status(200).json(stats);
   } catch (e) {
     res.status(500).json({
       error: e.message
@@ -229,20 +229,6 @@ async function getMDXBalance(req, res) {
   }
 }
 
-async function getTotalRemainingTokens(req, res) {
-  try {
-    const contractInstance = await crowdSaleContract;
-    const totalRemainingTokens = await contractInstance.totalRemainingTokens();
-    res.status(200).json({
-      totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth)
-    });
-  } catch (e) {
-    res.status(500).json({
-      error: e.message
-    });
-  }
-}
-
 function checkIfAddressIsValid(req, res) {
   const { address } = req.params;
   address ? res.status(200).json({ isValid: isAddress(address) }) : res.status(500).json({ error: "Please provide address" })
@@ -251,13 +237,90 @@ function checkIfAddressIsValid(req, res) {
 module.exports = {
   netkiStatusFetcher,
   getCrowdSaleStats,
-  getRemainingTokensInRound,
   registerUser,
   getUserProfile,
   addAddressToProfile,
   checkIfWhitelisted,
   getTransactionHistory,
   getMDXBalance,
-  getTotalRemainingTokens,
-  checkIfAddressIsValid
+  checkIfAddressIsValid,
+  getEverything
 };
+
+
+async function statsFetcher() {
+  const contractInstance = await crowdSaleContract;
+  const weiRaised = await contractInstance.weiRaised();
+  const wanRaised = Math.floor(weiRaised / weiPerEth);
+  const tokensSold = await contractInstance.tokensSold();
+  const crowdSaleBeingTimeStamp = 1538956800000;
+  const timeElapsedSinceCrowdSaleStarted =
+    Date.now() - crowdSaleBeingTimeStamp;
+  const twoWeeks = 1000 * 60 * 60 * 24 * 14;
+  let currentRound, mdxPerWan;
+  if (wanRaised > 44000000 || timeElapsedSinceCrowdSaleStarted > twoWeeks) {
+    if (
+      wanRaised > 44000000 + 15500000 ||
+      timeElapsedSinceCrowdSaleStarted > twoWeeks * 2
+    ) {
+      currentRound = 3;
+      mdxPerWan = 11.2;
+    } else {
+      currentRound = 2;
+      mdxPerWan = 12.4;
+    }
+  } else {
+    currentRound = 1;
+    mdxPerWan = 17.6;
+  }
+  const remainingTokensInRound = await contractInstance.roundRemainingTokens();
+  const totalRemainingTokens = await contractInstance.totalRemainingTokens();
+
+
+  return {
+    wanRaised,
+    tokensSold: Math.floor(tokensSold / weiPerEth),
+    currentRound,
+    mdxPerWan,
+    remainingTokensInRound: Math.floor(remainingTokensInRound / weiPerEth),
+    totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth)
+  }
+}
+
+async function checkNetkiStatus(netkiCode, email, publicEthAddress, contractInstance) {
+  try {
+    const status = await getTransaction(netkiCode);
+    const formattedStatus = JSON.parse(status);
+    let approvalStatus;
+    if (formattedStatus.results.length > 0) {
+      const userResults = formattedStatus.results[0];
+      approvalStatus = userResults.state;
+      if (approvalStatus === "completed") {
+        isWhitelisted = await contractInstance.whitelist(
+          publicEthAddress
+        );
+        if (!isWhitelisted) {
+          await contractInstance.addAddressToWhitelist(publicEthAddress);
+          isWhitelisted = await contractInstance.whitelist(publicEthAddress);
+          await updateNetkiApprovedStatus(email, isWhitelisted);
+        }
+      } else if (approvalStatus === "restarted") {
+        const codeHistory = await getCodeHistory(netkiCode);
+        const { code } = codeHistory.child_codes[0];
+        await knex("ico")
+          .update({ netki_code: code })
+          .where({ email });
+        return netkiStatusFetcher(req, res);
+      } else if (approvalStatus === "failed") {
+        await updateNetkiApprovedStatus(email, false);
+        isWhitelisted = false
+      } else {
+        approvalStatus = "Hasn't started netki process"
+      }
+    }
+    return approvalStatus;
+  } catch (error) {
+    throw error
+  }
+
+}

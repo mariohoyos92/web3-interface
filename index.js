@@ -4,15 +4,14 @@ const { json } = require("body-parser");
 const {
   netkiStatusFetcher,
   getCrowdSaleStats,
-  getRemainingTokensInRound,
   registerUser,
   getUserProfile,
   addAddressToProfile,
   checkIfWhitelisted,
   getTransactionHistory,
   getMDXBalance,
-  getTotalRemainingTokens,
-  checkIfAddressIsValid
+  checkIfAddressIsValid,
+  getEverything
 } = require("./utils/controllers");
 
 const app = express();
@@ -22,13 +21,17 @@ app.use(json());
 
 app.post("/netki-registration", registerUser);
 
-// Used to get the profile information for a user via email
-
-app.get("/user-profile/:email", getUserProfile);
-
 // Used to add a public address to a user's profile
 
 app.post("/user/publicAddress", addAddressToProfile);
+
+// Master endpoint to return all of the information for a user/crowdsale info
+
+app.get("/everything/:email", getEverything)
+
+// Used to get the profile information for a user via email
+
+app.get("/user-profile/:email", getUserProfile);
 
 // Used to get the netki status for a user by their email address
 
@@ -49,14 +52,6 @@ app.get("/is-valid-address/:address", checkIfAddressIsValid)
 // Used to retrieve MDX balance for an address by email
 
 app.get("/mdx-balance/:email", getMDXBalance);
-
-// Used to get the total remaining tokens to be sold across all phases
-
-app.get("/total-remaining-tokens", getTotalRemainingTokens);
-
-// Used to get the tokens remaining to be sold in the current phase
-
-app.get("/remaining-tokens-in-round", getRemainingTokensInRound);
 
 // Used to get Crowdsale stats
 
