@@ -73,7 +73,7 @@ async function netkiStatusFetcher(req, res) {
   const { email } = req.params;
 
   try {
-    const { netki_code, public_eth_address } = await getUserByEmail(email);
+    const { netki_code, wallets } = await getUserByEmail(email);
     const status = await getTransaction(netki_code);
     const formattedStatus = JSON.parse(status);
     if (formattedStatus.results.length > 0) {
@@ -81,17 +81,23 @@ async function netkiStatusFetcher(req, res) {
       const approvalStatus = userResults.state;
       if (approvalStatus === "completed") {
         const contractInstance = await crowdSaleContract;
-        let isWhitelisted = await contractInstance.whitelist(
+        let walletArray = await Promise.all(wallets.map(({ public_eth_address }) => contractInstance.whitelist(
           public_eth_address
-        );
-        if (isWhitelisted) {
-          res.status(200).json({ approvalStatus, isWhitelisted });
-        } else {
-          await contractInstance.addAddressToWhitelist(public_eth_address);
-          isWhitelisted = await contractInstance.whitelist(public_eth_address);
-          await updateNetkiApprovedStatus(email, isWhitelisted);
-          res.status(200).json({ approvalStatus, isWhitelisted });
-        }
+        ).then(result => {
+          return { address: public_eth_address, isWhitelisted: result }
+        })));
+
+        const statusArray = await Promise.all(walletArray.map(address => {
+          if (address.isWhitelisted) {
+            return address
+          } else {
+            return contractInstance.addAddressToWhitelist(address.address).then(() => knex("wallets").update({ is_whitelisted: true }).where({ public_eth_address: address.address }).then(() => { return { address: address.address, isWhitelisted: true } })
+            )
+          }
+        }))
+        await updateNetkiApprovedStatus(email, true);
+        res.status(200).json({ walletStatus: statusArray, approvalStatus });
+
       } else if (approvalStatus === "restarted") {
         const codeHistory = await getCodeHistory(netki_code);
         const { code } = codeHistory.child_codes[0];
@@ -109,6 +115,7 @@ async function netkiStatusFetcher(req, res) {
       res.status(200).json({ approvalStatus: "Hasn't started netki process" });
     }
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: error.message });
   }
 }
