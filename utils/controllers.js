@@ -200,17 +200,21 @@ async function checkIfWhitelisted(req, res) {
 async function getTransactionHistory(req, res) {
   const { email } = req.params;
   try {
-    const { public_eth_address } = await getUserByEmail(email);
-    await getTransactions(public_eth_address, async (err, txHistory) => {
-      if (err) {
-        res.status(500).json({ error: err });
-      } else if (txHistory.length === 0) {
-        res.status(200).json({ transactions: [] });
-      } else {
-        const formattedTransactions = txHistory.map(formatTransactions);
-        res.status(200).json({ transactions: formattedTransactions });
-      }
-    });
+    const { wallets } = await getUserByEmail(email);
+
+    const transactionHistory = await Promise.all(wallets.map(({ public_eth_address }) => new Promise((resolve, reject) => {
+      getTransactions(public_eth_address, async (err, txHistory) => {
+        if (err) {
+          reject(err)
+        } else if (txHistory.length === 0) {
+          resolve({ address: public_eth_address, transactions: [] })
+        } else {
+          const formattedTransactions = txHistory.map(formatTransactions);
+          resolve({ address: public_eth_address, transactions: formattedTransactions })
+        }
+      })
+    })))
+    res.status(200).json({ transactionHistory })
   } catch (e) {
     res.status(500).json({ error: e });
   }
