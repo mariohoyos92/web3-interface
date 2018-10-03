@@ -10,7 +10,8 @@ const {
   checkIfCodeInUse,
   addUsertoDB,
   addAddressToUser,
-  getUserByNetkiCode
+  getUserByNetkiCode,
+  updateWhitelistStatus
 } = require("./dbAcessors");
 const {
   crowdSaleContract,
@@ -91,7 +92,7 @@ async function netkiStatusFetcher(req, res) {
           if (address.isWhitelisted) {
             return address
           } else {
-            return contractInstance.addAddressToWhitelist(address.address).then(() => knex("wallets").update({ is_whitelisted: true }).where({ public_eth_address: address.address }).then(() => { return { address: address.address, isWhitelisted: true } })
+            return contractInstance.addAddressToWhitelist(address.address).then(() => updateWhitelistStatus(address.address, true).then(() => { return { address: address.address, isWhitelisted: true } })
             )
           }
         }))
@@ -176,8 +177,18 @@ async function getUserProfile(req, res) {
 async function addAddressToProfile(req, res) {
   const { email, publicAddress } = req.body;
   try {
-    const [updatedUser] = await addAddressToUser(email, publicAddress);
-    res.status(200).json({ updatedUser });
+    await addAddressToUser(email, publicAddress);
+    const user = await getUserByEmail(email);
+    if (user.netki_approved) {
+      const contractInstance = await crowdSaleContract;
+      await contractInstance.addAddressToWhitelist(publicAddress)
+      await updateWhitelistStatus(publicAddress, true)
+      const updatedUser = await getUserByEmail(email);
+      res.status(200).json({ updatedUser });
+    } else {
+      const updatedUser = await getUserByEmail(email);
+      res.status(200).json({ updatedUser });
+    }
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: e });
