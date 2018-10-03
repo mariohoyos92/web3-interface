@@ -30,10 +30,15 @@ async function updateNetkiApprovedStatus(email, status) {
     .where({ email });
 }
 
+async function getUserByNetkiCode(netkiCode) {
+  return knex("ico").where({ netki_code: netkiCode }).first();
+}
+
 module.exports = {
   checkIfCodeInUse,
   addUsertoDB,
   getUserByEmail,
   addAddressToUser,
-  updateNetkiApprovedStatus
+  updateNetkiApprovedStatus,
+  getUserByNetkiCode
 };

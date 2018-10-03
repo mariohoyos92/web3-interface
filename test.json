@@ -1,0 +1,149 @@
+{
+    "identity": {
+        "id": "83d0d0b0-68e8-4746-8197-ca4d18a21e2c",
+        "client": "604e1738-4716-4bdd-867b-4942186b1e1c",
+        "transaction_identity": {
+            "id": "f6ee3bb3-8955-4b6a-b012-f75caa0de364",
+            "identity_emails": [
+                {
+                    "id": "f2a172cc-6716-462e-89f0-3468dec53721",
+                    "created": "2018-04-30T17:57:54.139181Z",
+                    "updated": "2018-04-30T17:57:54.139198Z",
+                    "is_active": true,
+                    "email": "test@email.com",
+                    "identity": "f6ee3bb3-8955-4b6a-b012-f75caa0de364"
+                }
+            ],
+            "identity_phone_numbers": [
+                {
+                    "id": "1d93d2a2-8ddc-43bc-9c93-03126d9071db",
+                    "created": "2018-04-30T17:57:54.166477Z",
+                    "updated": "2018-04-30T20:09:14.845833Z",
+                    "is_active": true,
+                    "phone_number": "+12345550100",
+                    "identity": "f6ee3bb3-8955-4b6a-b012-f75caa0de364"
+                }
+            ],
+            "identity_addresses": [
+                {
+                    "id": "734fa958-f604-4558-a3f7-fde62d6d4617",
+                    "created": "2018-04-30T17:57:54.118040Z",
+                    "updated": "2018-04-30T17:57:54.118059Z",
+                    "is_active": true,
+                    "address": "12345 Oompa Loompa Rd",
+                    "unit": "",
+                    "city": "12345 Oompa Loompa Rd",
+                    "state": "TX",
+                    "postalcode": "40110",
+                    "score": 0,
+                    "country_code": "US",
+                    "identity": "f6ee3bb3-8955-4b6a-b012-f75caa0de364"
+                }
+            ],
+            "identity_documents": [],
+            "identity_data_sources": [],
+            "identity_data_listings": [],
+            "identity_media_references": [],
+            "identity_access_code": null,
+            "identity_accredited_investor_status": {
+                "id": "999b679e-5b79-42c1-b68e-cae3a2559fca",
+                "identity": {
+                    "id": "f6ee3bb3-8955-4b6a-b012-f75caa0de364",
+                    "transaction": "83d0d0b0-68e8-4746-8197-ca4d18a21e2c",
+                    "first_name": "John",
+                    "last_name": "Doe"
+                },
+                "created": "2018-04-30T18:09:10.632229Z",
+                "updated": "2018-04-30T18:09:10.647964Z",
+                "is_active": true,
+                "status": "open",
+                "vendor_status": "waiting_for_investor_acceptance",
+                "raw_data": {
+                    "id": 1876,
+                    "status": "waiting_for_investor_acceptance",
+                    "message": "The verification process is waiting for the investor to start.",
+                    "investor": {
+                        "id": 1559
+                    },
+                    "deal_name": null,
+                    "created_at": "2018-04-30T11:09:10.451-07:00",
+                    "legal_name": "JOHN DOE",
+                    "portal_name": "MyVerify",
+                    "webhook_url": "http://localhost:8000/verify-investor/callback/",
+                    "investor_url": "http://verifyinvestor-staging.herokuapp.com/investor/verification-requests/1876/accept",
+                    "redirect_url": "http://localhost:8000/verify-investor/complete/",
+                    "internal_status": "open",
+                    "waiting_for_info": false,
+                    "verified_expires_at": null
+                },
+                "message": "The verification process is waiting for the investor to start."
+            },
+            "identity_json_objects": [],
+            "errors": [],
+            "created": "2018-04-30T17:57:54.093394Z",
+            "updated": "2018-04-30T20:09:14.836752Z",
+            "first_name": "John",
+            "last_name": "Doe",
+            "middle_name": "Tester",
+            "alias": null,
+            "country_code": "US",
+            "selected_country_code": "US",
+            "locale": null,
+            "state": "new",
+            "is_active": true,
+            "death_date": "2016-01-01",
+            "birth_location": null,
+            "status": "unknown",
+            "client_guid": "tester-guid",
+            "birth_date": "2001-11-22",
+            "gender": null,
+            "height": null,
+            "weight": null,
+            "eye_color": null,
+            "hair_color": null,
+            "investor_type": "private_party",
+            "ssn": null,
+            "medical_license": null,
+            "insurance_license": null,
+            "drivers_license": null,
+            "passport_number": null,
+            "is_accredited_investor": true,
+            "title": null,
+            "ownership_percentage": null,
+            "notes": "",
+            "phone_is_validated": true,
+            "transaction": "83d0d0b0-68e8-4746-8197-ca4d18a21e2c",
+            "business": "604e1738-4716-4bdd-867b-4942186b1e1c"
+        },
+        "transaction_metadata": {
+            "id": 112,
+            "created": "2018-04-30T17:57:55.421248Z",
+            "updated": "2018-04-30T17:57:55.421268Z",
+            "is_active": true,
+            "country_code": "US",
+            "state": "TX",
+            "gender": null,
+            "birth_date": null,
+            "locale": "",
+            "app_name": null,
+            "platform": null,
+            "platform_version": null,
+            "app_version": null,
+            "sdk_version": null,
+            "data_hits": null,
+            "media_hits": null,
+            "face_match_score": null,
+            "quality_score": null,
+            "transaction": "83d0d0b0-68e8-4746-8197-ca4d18a21e2c"
+        },
+        "transaction_callbacks": [],
+        "required_fields": [],
+        "errors": [],
+        "created": "2018-04-30T17:56:34.688474Z",
+        "updated": "2018-04-30T17:56:34.688512Z",
+        "is_active": true,
+        "state": "new",
+        "notes": null,
+        "contettype": 29
+    }
+}

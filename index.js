@@ -12,7 +12,8 @@ const {
   getMDXBalance,
   checkIfAddressIsValid,
   getEverything,
-  getWanBalance
+  getWanBalance,
+  handleCallback
 } = require("./utils/controllers");
 
 const app = express();
@@ -66,22 +67,7 @@ app.get("/wan-balance/:address", getWanBalance)
 
 // Used to handle callbacks from netki
 
-app.post("/callback", async (req, res) => {
-  res.status(200).json({ status: "success" });
-  // find netki-code in body
-  // find status in body
-  // pull user out of db by netki-code
-  // if no user, do nothing?
-  //
-  // if status === completed
-  //    if there is a user, change netki-approved to true
-  //    if that user has an ethereum address go ahead and whitelist it now
-  //    send an email to the user letting them know they've been approved with directions on what to do next
-  //
-  // if status === failed
-  //    change netki-approved to false
-  //    send email to user about rejection OR send email to Michael to check in dashboard for restarting OR both.
-});
+app.post("/callback", handleCallback);
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port: ${port}`));

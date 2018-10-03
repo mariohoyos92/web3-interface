@@ -9,7 +9,8 @@ const {
   updateNetkiApprovedStatus,
   checkIfCodeInUse,
   addUsertoDB,
-  addAddressToUser
+  addAddressToUser,
+  getUserByNetkiCode
 } = require("./dbAcessors");
 const {
   crowdSaleContract,
@@ -244,6 +245,34 @@ async function getWanBalance(req, res) {
 
 }
 
+async function handleCallback(req, res) {
+  try {
+    console.log(req.body.identity.transaction_identity.identity_access_code)
+    const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
+    const { state } = req.body.identity;
+    const { email, public_eth_address } = await getUserByNetkiCode(netkiCode)
+    if (state === "completed") {
+      // if status === completed
+      //    if there is a user, change netki-approved to true
+      //    if that user has an ethereum address go ahead and whitelist it now
+      //    send an email to the user letting them know they've been approved with directions on what to do next
+      //
+
+      res.status(200).json({ status: "success" });
+    } else if (state === "failed") {
+      // if status === failed
+      //    change netki-approved to false
+      //    send email to user about rejection OR send email to Michael to check in dashboard for restarting OR both.
+      res.status(200).json({ status: "success" });
+    } else {
+      res.status(200).json({ status: "success" });
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(500)
+  }
+}
+
 module.exports = {
   netkiStatusFetcher,
   getCrowdSaleStats,
@@ -255,7 +284,8 @@ module.exports = {
   getMDXBalance,
   checkIfAddressIsValid,
   getEverything,
-  getWanBalance
+  getWanBalance,
+  handleCallback
 };
 
 async function statsFetcher() {
