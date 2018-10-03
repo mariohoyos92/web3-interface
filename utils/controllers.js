@@ -268,9 +268,9 @@ async function getWanBalance(req, res) {
 
 async function handleCallback(req, res) {
   try {
-    console.log(req.body.transaction_identity.identity_access_code)
-    const netkiCode = req.body.transaction_identity.identity_access_code.code;
-    const { state } = req.body;
+    console.log(req.body.identity.transaction_identity.identity_access_code)
+    const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
+    const { state } = req.body.identity;
     console.log(netkiCode, state)
     res.status(200).json({ status: "success" });
     // // const { email, public_eth_address } = await getUserByNetkiCode(netkiCode)
