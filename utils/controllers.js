@@ -271,7 +271,7 @@ async function handleCallback(req, res) {
     console.log(req.body.identity.transaction_identity.identity_access_code)
     const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
     const { state } = req.body.identity;
-    const { email, public_eth_address } = await getUserByNetkiCode(netkiCode)
+    // const { email, public_eth_address } = await getUserByNetkiCode(netkiCode)
     if (state === "completed") {
       // if status === completed
       //    if there is a user, change netki-approved to true
