@@ -28,40 +28,33 @@ const weiPerEth = 1000000000000000000;
 async function getEverything(req, res) {
   const { email } = req.params;
   try {
-    const { public_eth_address, netki_code } = await getUserByEmail(email);
+    const { wallets, netki_code } = await getUserByEmail(email);
     const stats = await statsFetcher();
-    const isValidAddress = isAddress(public_eth_address);
     const tokenInstance = await tokenContract;
     const contractInstance = await crowdSaleContract;
     let netkiApprovalStatus = await checkNetkiStatus(
       netki_code,
       email,
-      public_eth_address,
-      contractInstance
-    );
-    let isWhitelisted, MDXBalance, wanBalance;
-    if (isValidAddress) {
+    )
+    let walletStatus = await Promise.all(wallets.map(async ({ public_eth_address }) => {
+
       isWhitelisted = await contractInstance.whitelist(public_eth_address);
       MDXBalance = await tokenInstance.balanceOf(public_eth_address);
-      wanBalance = await getBalance(public_eth_address);
-      if (MDXBalance && isWhitelisted) {
-        transactionHistory = await txHistoryFetcher(public_eth_address, this)
+      wanBalance = await getBalance(public_eth_address)
+      transactionHistory = await txHistoryFetcher(public_eth_address)
+      return {
+        address: public_eth_address,
+        isWhitelisted,
+        MDXBalance: Math.floor(MDXBalance / weiPerEth),
+        wanBalance: Math.floor(wanBalance / weiPerEth),
+        transactionHistory
       }
-    } else {
-      isWhitelisted = false;
-      MDXBalance = 0;
-      transactionHistory = [];
-    }
+    }));
     res
       .status(200)
       .json({
+        walletStatus,
         crowdSaleStats: stats,
-        publicEthAddress: public_eth_address,
-        isValidAddress,
-        isWhitelisted,
-        wanBalance: Math.floor(wanBalance / weiPerEth),
-        MDXBalance: Math.floor(MDXBalance / weiPerEth),
-        transactions: transactionHistory,
         approvalStatus: netkiApprovalStatus
       });
   } catch (e) {
@@ -108,9 +101,9 @@ async function netkiStatusFetcher(req, res) {
         netkiStatusFetcher(req, res);
       } else if (approvalStatus === "failed") {
         await updateNetkiApprovedStatus(email, false);
-        res.status(200).json({ approvalStatus, isWhitelisted: false });
+        res.status(200).json({ approvalStatus });
       } else {
-        res.status(200).json({ approvalStatus, isWhitelisted: false });
+        res.status(200).json({ approvalStatus });
       }
     } else {
       res.status(200).json({ approvalStatus: "Hasn't started netki process" });
@@ -346,9 +339,7 @@ async function statsFetcher() {
 
 async function checkNetkiStatus(
   netkiCode,
-  email,
-  publicEthAddress,
-  contractInstance
+  email
 ) {
   if (!netkiCode) return "No netki code associated with user";
   try {
@@ -358,29 +349,24 @@ async function checkNetkiStatus(
     if (formattedStatus.results.length > 0) {
       const userResults = formattedStatus.results[0];
       approvalStatus = userResults.state;
-      if (approvalStatus === "completed" && publicEthAddress) {
-        isWhitelisted = await contractInstance.whitelist(publicEthAddress);
-        if (!isWhitelisted) {
-          await contractInstance.addAddressToWhitelist(publicEthAddress);
-          isWhitelisted = await contractInstance.whitelist(publicEthAddress);
-          await updateNetkiApprovedStatus(email, isWhitelisted);
-        }
-      } else if (approvalStatus === "restarted") {
-        const codeHistory = await getCodeHistory(netkiCode);
-        const { code } = codeHistory.child_codes[0];
-        await knex("ico")
-          .update({ netki_code: code })
-          .where({ email });
-        return netkiStatusFetcher(req, res);
-      } else if (approvalStatus === "failed") {
-        await updateNetkiApprovedStatus(email, false);
-        isWhitelisted = false;
-      } else {
-        approvalStatus = "Hasn't started netki process";
-        isWhiteListed = false;
+      if (approvalStatus === "completed") {
+        await updateNetkiApprovedStatus(email, true);
       }
+    } else if (approvalStatus === "restarted") {
+      const codeHistory = await getCodeHistory(netkiCode);
+      const { code } = codeHistory.child_codes[0];
+      await knex("ico")
+        .update({ netki_code: code })
+        .where({ email });
+      return netkiStatusFetcher(req, res);
+    } else if (approvalStatus === "failed") {
+      await updateNetkiApprovedStatus(email, false);
+      isWhitelisted = false;
+    } else {
+      approvalStatus = "Hasn't started netki process";
+      isWhiteListed = false;
     }
-    return { approvalStatus, isWhitelisted };
+    return approvalStatus
   } catch (error) {
     throw error;
   }
