@@ -11,17 +11,23 @@ async function addUsertoDB(email, netkiCode) {
   return knex("ico").insert({ email, netki_code: netkiCode });
 }
 
-async function getUserByEmail(email) {
-  return knex("ico")
-    .where({ email })
+async function getUserByEmail(providedEmail) {
+  const { id, email, netki_code, netki_approved } = await knex("ico")
+    .where({ email: providedEmail })
     .first();
+  const wallets = await knex("wallets").where({ user_id: id })
+  return {
+    email,
+    netki_code,
+    netki_approved,
+    wallets
+  }
 }
 
 async function addAddressToUser(email, publicAddress) {
   return knex("ico")
-    .update({ public_eth_address: publicAddress })
     .where({ email })
-    .returning("*");
+    .first().then(id => knex("wallets").insert({ user_id: id, public_eth_address: publicAddress }))
 }
 
 async function updateNetkiApprovedStatus(email, status) {

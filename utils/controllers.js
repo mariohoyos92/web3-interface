@@ -180,9 +180,13 @@ async function addAddressToProfile(req, res) {
 async function checkIfWhitelisted(req, res) {
   try {
     const { email } = req.params;
-    const { public_eth_address } = await getUserByEmail(email);
+    const { wallets } = await getUserByEmail(email);
     const contractInstance = await crowdSaleContract;
-    const isWhitelisted = await contractInstance.whitelist(public_eth_address);
+    const isWhitelisted = await Promise.all(wallets.map(({ public_eth_address }) =>
+      contractInstance.whitelist(public_eth_address).then(result => {
+        return { address: public_eth_address, isWhitelisted: result }
+      })
+    ))
     res.status(200).json({
       isWhitelisted
     });
