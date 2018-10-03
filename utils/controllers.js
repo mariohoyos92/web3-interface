@@ -241,11 +241,13 @@ async function getTransactionHistory(req, res) {
 async function getMDXBalance(req, res) {
   try {
     const { email } = req.params;
-    const { public_eth_address } = await getUserByEmail(email);
+    const { wallets } = await getUserByEmail(email);
     const tokenInstance = await tokenContract;
-    const MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+    const MDXBalances = await Promise.all(wallets.map(({ public_eth_address }) => tokenInstance.balanceOf(public_eth_address).then((balance) => {
+      return { address: public_eth_address, MDXBalance: Math.floor(balance / weiPerEth) }
+    })))
     res.status(200).json({
-      MDXBalance: Math.floor(MDXBalance / weiPerEth)
+      MDXBalances
     });
   } catch (e) {
     res.status(500).json({
