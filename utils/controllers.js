@@ -325,9 +325,10 @@ async function checkNetkiStatus(
         isWhitelisted = false;
       } else {
         approvalStatus = "Hasn't started netki process";
+        isWhiteListed= false;
       }
     }
-    return approvalStatus;
+    return { approvalStatus, isWhitelisted };
   } catch (error) {
     throw error;
   }
