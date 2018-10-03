@@ -16,7 +16,8 @@ const {
   getTransactions,
   tokenContract,
   isAddress,
-  getBalance
+  getBalance,
+  formatTransactions
 } = require("../web3");
 const { EmailStruct, sendEmail } = require("../email/email");
 
@@ -195,20 +196,13 @@ async function getTransactionHistory(req, res) {
   const { email } = req.params;
   try {
     const { public_eth_address } = await getUserByEmail(email);
-    await getTransactions(public_eth_address, (err, txHistory) => {
+    await getTransactions(public_eth_address, async (err, txHistory) => {
       if (err) {
         res.status(500).json({ error: err });
       } else if (txHistory.length === 0) {
         res.status(200).json({ transactions: [] });
       } else {
-        const formattedTransactions = txHistory.map(tx => {
-          return {
-            purchaserAddress: tx.args.purchaser,
-            beneficiaryAddress: tx.args.beneficiary,
-            tokensPurchased: Math.round(tx.args.amount / weiPerEth),
-            txHash: tx.transactionHash
-          };
-        });
+        const formattedTransactions = txHistory.map(formatTransactions);
         res.status(200).json({ transactions: formattedTransactions });
       }
     });
@@ -325,7 +319,7 @@ async function checkNetkiStatus(
         isWhitelisted = false;
       } else {
         approvalStatus = "Hasn't started netki process";
-        isWhiteListed= false;
+        isWhiteListed = false;
       }
     }
     return { approvalStatus, isWhitelisted };
@@ -342,14 +336,7 @@ async function txHistoryFetcher(publicEthAddress) {
         if (err) {
           resolve([])
         } else {
-          const formattedTransactions = txHistory.map(tx => {
-            return {
-              purchaserAddress: tx.args.purchaser,
-              beneficiaryAddress: tx.args.beneficiary,
-              tokensPurchased: Math.round(tx.args.amount / weiPerEth),
-              txHash: tx.transactionHash
-            };
-          });
+          const formattedTransactions = txHistory.map(formatTransactions);
           resolve(formattedTransactions)
         }
       }

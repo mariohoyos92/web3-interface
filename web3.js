@@ -5,6 +5,7 @@ const provider = new Web3.providers.HttpProvider(
 );
 const web3Lib = new Web3(provider);
 const contract = require("truffle-contract");
+const moment = require('moment')
 
 const crowdSale = contract(require("./contracts/MDXCrowdsale.json"));
 const token = contract(require("./contracts/MDXToken.json"));
@@ -54,6 +55,19 @@ async function getBalance(address) {
   return web3Lib.eth.getBalance(address);
 }
 
+function formatTransactions(tx) {
+  const weiPerEth = 1000000000000000000;
+  const { timestamp } = web3Lib.eth.getBlock(tx.blockNumber);
+  const transactionTime = moment(timestamp * 1000).format('MMMM Do YYYY, h:mm:ss a');
+  return {
+    purchaserAddress: tx.args.purchaser,
+    beneficiaryAddress: tx.args.beneficiary,
+    tokensPurchased: Math.round(tx.args.amount / weiPerEth),
+    txHash: tx.transactionHash,
+    transactionTime
+  };
+}
+
 // Dummy function I've been using to buy tokens to see that amounts change
 // crowdSaleContract.then(instance => instance.buyTokens("0xd03ea8624c8c5987235048901fb614fdca89b117", { value: 130000000000000000000 }))
 
@@ -62,5 +76,6 @@ module.exports = {
   tokenContract,
   getTransactions,
   isAddress,
-  getBalance
+  getBalance,
+  formatTransactions
 };
