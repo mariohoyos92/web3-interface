@@ -30,7 +30,7 @@ app.post("/callback", async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   } else {
-    res.status(500).json({ error: "Incorrect login and/or password" });
+    unauthorized(res)
   }
 });
 
@@ -40,5 +40,5 @@ app.listen(port, () => console.log(`Listening on port: ${port}`));
 
 function unauthorized(res) {
   res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
-  return res.status(401);
+  return res.sendStatus(401);
 };
