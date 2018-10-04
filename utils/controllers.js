@@ -350,7 +350,7 @@ async function statsFetcher() {
     mdxPerWan,
     remainingTokensInRound: Math.floor(remainingTokensInRound / weiPerEth),
     totalRemainingTokens: Math.floor(totalRemainingTokens / weiPerEth),
-    timeRemainingInRound: parseInt(timeRemainingInRound)
+    timeRemainingInRound: parseInt(timeRemainingInRound * 1000)
   };
 }
 
@@ -397,7 +397,7 @@ async function txHistoryFetcher(publicEthAddress) {
   })
 }
 
-getTransaction('bmxkf6').then(res => console.log(JSON.parse(res).results[0].transaction_identity.identity_access_code.code))
+// getTransaction('bmxkf6').then(res => console.log(JSON.parse(res).results[0].transaction_identity.identity_access_code.code))
 // const draft = new EmailStruct(
 //   "mariohoyos92@gmail.com",
 //   "BlockMedx KYC Verification Complete!",
