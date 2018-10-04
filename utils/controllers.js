@@ -1,7 +1,6 @@
 const knex = require("../db/connection");
 const {
   getTransaction,
-  getCodeHistory,
   getAuthCodes
 } = require("../kyc-service");
 const {
@@ -12,7 +11,6 @@ const {
   addAddressToUser,
   getUserByNetkiCode,
   updateWhitelistStatus,
-  updateUserNetkiCode
 } = require("./dbAcessors");
 const {
   crowdSaleContract,
@@ -92,12 +90,6 @@ async function netkiStatusFetcher(req, res) {
         }))
         await updateNetkiApprovedStatus(email, true);
         res.status(200).json({ walletStatus: statusArray, approvalStatus });
-
-      } else if (approvalStatus === "restarted") {
-        const codeHistory = await getCodeHistory(netki_code);
-        const { code } = codeHistory.child_codes[0];
-        await updateUserNetkiCode(email, code)
-        netkiStatusFetcher(req, res);
       } else if (approvalStatus === "failed") {
         await updateNetkiApprovedStatus(email, false);
         res.status(200).json({ approvalStatus });
@@ -267,14 +259,9 @@ async function getWanBalance(req, res) {
 
 async function handleCallback(req, res) {
   try {
-
-    console.log(req.body.identity.transaction_identity.identity_access_code)
-    // const identityObject = req.body.identity.transaction_identity.identity_access_code;
     const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
     const { state } = req.body.identity;
     const { email, wallets } = await getUserByNetkiCode(netkiCode);
-    const latestCode = await getLatestCode(netkiCode);
-    await updateUserNetkiCode(email, latestCode);
     if (state === "completed") {
       await updateNetkiApprovedStatus(email, true);
       const contractInstance = await crowdSaleContract;
@@ -382,17 +369,11 @@ async function checkNetkiStatus(
       if (approvalStatus === "completed") {
         await updateNetkiApprovedStatus(email, true);
       }
-    } else if (approvalStatus === "restarted") {
-      const codeHistory = await getCodeHistory(netkiCode);
-      const { code } = codeHistory.child_codes[0];
-      await updateUserNetkiCode(email, code)
-      return netkiStatusFetcher(req, res);
-    } else if (approvalStatus === "failed") {
-      await updateNetkiApprovedStatus(email, false);
-      isWhitelisted = false;
+      else if (approvalStatus === "failed") {
+        await updateNetkiApprovedStatus(email, false);
+      }
     } else {
       approvalStatus = "Hasn't started netki process";
-      isWhiteListed = false;
     }
     return approvalStatus
   } catch (error) {
@@ -416,16 +397,7 @@ async function txHistoryFetcher(publicEthAddress) {
   })
 }
 
-async function getLatestCode(parentCode) {
-  const code = await getCodeHistory(parentCode);
-  if (code.child_codes.length > 0) {
-    return await getLatestCode(code.child_codes[0].code);
-  } else {
-    return code.code
-  }
-}
-
-// getLatestCode('bmxkf6').then(console.log)
+getTransaction('bmxkf6').then(res => console.log(JSON.parse(res).results[0].transaction_identity.identity_access_code.code))
 // const draft = new EmailStruct(
 //   "mariohoyos92@gmail.com",
 //   "BlockMedx KYC Verification Complete!",

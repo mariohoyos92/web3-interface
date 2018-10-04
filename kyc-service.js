@@ -124,5 +124,6 @@ function getAuthCodes() {
   });
 }
 
-// getAuthCodes().then(codes => console.log(codes.length))
+// getAuthCodes().then(codes => console.log(codes))
+
 module.exports = { getAuthCodes, getTransaction, getCodeHistory };
