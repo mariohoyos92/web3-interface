@@ -272,9 +272,9 @@ async function handleCallback(req, res) {
     // const identityObject = req.body.identity.transaction_identity.identity_access_code;
     const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
     const { state } = req.body.identity;
+    const { email, wallets } = await getUserByNetkiCode(netkiCode);
     const latestCode = await getLatestCode(netkiCode);
     await updateUserNetkiCode(email, latestCode);
-    const { email, wallets } = await getUserByNetkiCode(latestCode);
     if (state === "completed") {
       await updateNetkiApprovedStatus(email, true);
       const contractInstance = await crowdSaleContract;
