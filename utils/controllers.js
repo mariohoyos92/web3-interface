@@ -11,7 +11,8 @@ const {
   addUsertoDB,
   addAddressToUser,
   getUserByNetkiCode,
-  updateWhitelistStatus
+  updateWhitelistStatus,
+  updateUserNetkiCode
 } = require("./dbAcessors");
 const {
   crowdSaleContract,
@@ -95,9 +96,7 @@ async function netkiStatusFetcher(req, res) {
       } else if (approvalStatus === "restarted") {
         const codeHistory = await getCodeHistory(netki_code);
         const { code } = codeHistory.child_codes[0];
-        await knex("ico")
-          .update({ netki_code: code })
-          .where({ email });
+        await updateUserNetkiCode(email, code)
         netkiStatusFetcher(req, res);
       } else if (approvalStatus === "failed") {
         await updateNetkiApprovedStatus(email, false);
@@ -268,28 +267,57 @@ async function getWanBalance(req, res) {
 
 async function handleCallback(req, res) {
   try {
+
     console.log(req.body.identity.transaction_identity.identity_access_code)
+    // const identityObject = req.body.identity.transaction_identity.identity_access_code;
     const netkiCode = req.body.identity.transaction_identity.identity_access_code.code;
     const { state } = req.body.identity;
-    console.log(netkiCode, state)
-    res.status(200).json({ status: "success" });
-    // // const { email, public_eth_address } = await getUserByNetkiCode(netkiCode)
-    // if (state === "completed") {
-    //   // if status === completed
-    //   //    if there is a user, change netki-approved to true
-    //   //    if that user has an ethereum address go ahead and whitelist it now
-    //   //    send an email to the user letting them know they've been approved with directions on what to do next
-    //   //
+    const latestCode = await getLatestCode(netkiCode);
+    await updateUserNetkiCode(email, latestCode);
+    const { email, wallets } = await getUserByNetkiCode(latestCode);
+    if (state === "completed") {
+      await updateNetkiApprovedStatus(email, true);
+      const contractInstance = await crowdSaleContract;
+      await Promise.all(wallets.map(
+        async ({ public_eth_address }) => {
+          await contractInstance.addAddressToWhitelist(public_eth_address);
+          await updateWhitelistStatus(public_eth_address, true)
+        }
+      ));
+      const draft = new EmailStruct(
+        email,
+        "BlockMedx KYC Verification Complete!",
+        "netki-approval-email",
+        {}
+      );
+      sendEmail(draft, (err, response) => {
+        if (err) {
+          res.status(500).json({ status: "error" });
+        } else {
+          res.status(200).json({ status: "success" });
+        }
+      });
 
-    //   res.status(200).json({ status: "success" });
-    // } else if (state === "failed") {
-    //   // if status === failed
-    //   //    change netki-approved to false
-    //   //    send email to user about rejection OR send email to Michael to check in dashboard for restarting OR both.
-    //   res.status(200).json({ status: "success" });
-    // } else {
-    //   res.status(200).json({ status: "success" });
-    // }
+    } else if (state === "failed") {
+      await updateNetkiApprovedStatus(email, false);
+      const draft = new EmailStruct(
+        email,
+        "BlockMedx KYC Verification Failed :(",
+        "netki-failure",
+        {}
+      );
+      sendEmail(draft, (err, response) => {
+        if (err) {
+          res.status(500).json({ status: "error" });
+        } else {
+          res.status(200).json({ status: "success" });
+        }
+      });
+    } else {
+      res.status(200).json({ status: "success" });
+    }
+
+    // TO DO determine if we want to do anything for HOLD status or anything like that, i don't think it's necessary but could go here.
   } catch (e) {
     console.log(e);
     res.status(500)
@@ -357,9 +385,7 @@ async function checkNetkiStatus(
     } else if (approvalStatus === "restarted") {
       const codeHistory = await getCodeHistory(netkiCode);
       const { code } = codeHistory.child_codes[0];
-      await knex("ico")
-        .update({ netki_code: code })
-        .where({ email });
+      await updateUserNetkiCode(email, code)
       return netkiStatusFetcher(req, res);
     } else if (approvalStatus === "failed") {
       await updateNetkiApprovedStatus(email, false);
@@ -389,3 +415,27 @@ async function txHistoryFetcher(publicEthAddress) {
     )
   })
 }
+
+async function getLatestCode(parentCode) {
+  const code = await getCodeHistory(parentCode);
+  if (code.child_codes.length > 0) {
+    return await getLatestCode(code.child_codes[0].code);
+  } else {
+    return code.code
+  }
+}
+
+// getLatestCode('bmxkf6').then(console.log)
+// const draft = new EmailStruct(
+//   "mariohoyos92@gmail.com",
+//   "BlockMedx KYC Verification Complete!",
+//   "netki-approval-email",
+//   {}
+// );
+// sendEmail(draft, (err, response) => {
+//   if (err) {
+//     console.log(err)
+//   } else {
+//     console.log(response)
+//   }
+// });

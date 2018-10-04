@@ -28,18 +28,18 @@ function getTransaction(authCode) {
 }
 
 function getCodeHistory(authCode) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     return getBearerToken()
       .then(token => {
         const business_uri = uri + "business/businesses/";
         const headers = makeHeaders(token);
-        request.get(business_uri, { headers }, function(err, resp, body) {
+        request.get(business_uri, { headers }, function (err, resp, body) {
           if (!err) {
             const business_id = JSON.parse(body).results[0].id;
             const access_codes_uri =
               business_uri + business_id + "/access-codes/" + authCode;
 
-            request.get(access_codes_uri, { headers }, function(
+            request.get(access_codes_uri, { headers }, function (
               err,
               resp,
               body
@@ -60,7 +60,7 @@ function getCodeHistory(authCode) {
   });
 }
 
-// getCodeHistory('bmxjeb').then(e => console.log(e));
+// getCodeHistory('bmxapzw').then(e => console.log(e));
 
 function getBearerToken() {
   return new Promise((resolve, reject) => {
@@ -90,18 +90,18 @@ function getBearerToken() {
 }
 
 function getAuthCodes() {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     return getBearerToken()
       .then(token => {
         const business_uri = uri + "business/businesses/";
         const headers = makeHeaders(token);
-        request.get(business_uri, { headers }, function(err, resp, body) {
+        request.get(business_uri, { headers }, function (err, resp, body) {
           if (!err) {
             const business_id = JSON.parse(body).results[0].id;
             const access_codes_uri =
               business_uri + business_id + "/access-codes/";
 
-            request.get(access_codes_uri, { headers }, function(
+            request.get(access_codes_uri, { headers }, function (
               err,
               resp,
               body
@@ -124,4 +124,5 @@ function getAuthCodes() {
   });
 }
 
+// getAuthCodes().then(codes => console.log(codes.length))
 module.exports = { getAuthCodes, getTransaction, getCodeHistory };

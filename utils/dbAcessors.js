@@ -36,13 +36,26 @@ async function updateNetkiApprovedStatus(email, status) {
 }
 
 async function getUserByNetkiCode(netkiCode) {
-  return knex("ico").where({ netki_code: netkiCode }).first();
+  const { id, email, netki_code, netki_approved } = await knex("ico").where({ netki_code: netkiCode }).first();
+  const wallets = await knex("wallets").where({ user_id: id });
+  return {
+    email,
+    netki_code,
+    netki_approved,
+    wallets
+  }
 }
+
 
 function updateWhitelistStatus(publicAddress, status) {
   return knex("wallets").update({ is_whitelisted: status }).where({ public_eth_address: publicAddress })
 }
 
+function updateUserNetkiCode(email, netkiCode) {
+  return knex("ico")
+    .update({ netki_code: netkiCode })
+    .where({ email });
+}
 module.exports = {
   checkIfCodeInUse,
   addUsertoDB,
@@ -50,5 +63,6 @@ module.exports = {
   addAddressToUser,
   updateNetkiApprovedStatus,
   getUserByNetkiCode,
-  updateWhitelistStatus
+  updateWhitelistStatus,
+  updateUserNetkiCode
 };
