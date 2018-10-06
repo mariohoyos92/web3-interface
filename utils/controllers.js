@@ -56,7 +56,8 @@ async function getEverything(req, res) {
       .json({
         walletStatus,
         crowdSaleStats: stats,
-        approvalStatus: netkiApprovalStatus
+        approvalStatus: netkiApprovalStatus,
+        netkiCode: netki_code
       });
   } catch (e) {
     console.log(e);
