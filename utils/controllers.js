@@ -266,26 +266,42 @@ async function handleCallback(req, res) {
     const { email, wallets } = await getUserByNetkiCode(netkiCode);
     if (state === "completed") {
       await updateNetkiApprovedStatus(email, true);
-      const contractInstance = await crowdSaleContract;
-      await Promise.all(wallets.map(
-        async ({ public_eth_address }) => {
-          await contractInstance.addAddressToWhitelist(public_eth_address);
-          await updateWhitelistStatus(public_eth_address, true)
-        }
-      ));
-      const draft = new EmailStruct(
-        email,
-        "BlockMedx KYC Verification Complete!",
-        "netki-approval-email",
-        {}
-      );
-      sendEmail(draft, (err, response) => {
-        if (err) {
-          res.status(500).json({ status: "error" });
-        } else {
-          res.status(200).json({ status: "success" });
-        }
-      });
+      if (wallets.length > 0) {
+        const contractInstance = await crowdSaleContract;
+        await Promise.all(wallets.map(
+          async ({ public_eth_address }) => {
+            await contractInstance.addAddressToWhitelist(public_eth_address);
+            await updateWhitelistStatus(public_eth_address, true)
+          }
+        ));
+        const draft = new EmailStruct(
+          email,
+          "BlockMedx KYC Verification Complete!",
+          "netki-approval-email",
+          {}
+        );
+        sendEmail(draft, (err, response) => {
+          if (err) {
+            res.status(500).json({ status: "error" });
+          } else {
+            res.status(200).json({ status: "success" });
+          }
+        });
+      } else {
+        const draft = new EmailStruct(
+          email,
+          "BlockMedx KYC Verification Complete!",
+          "netki-approval-add-address",
+          {}
+        );
+        sendEmail(draft, (err, response) => {
+          if (err) {
+            res.status(500).json({ status: "error" });
+          } else {
+            res.status(200).json({ status: "success" });
+          }
+        })
+      }
 
     } else if (state === "failed") {
       await updateNetkiApprovedStatus(email, false);
@@ -403,7 +419,7 @@ async function txHistoryFetcher(publicEthAddress) {
 // const draft = new EmailStruct(
 //   "mariohoyos92@gmail.com",
 //   "BlockMedx KYC Verification Complete!",
-//   "netki-approval-email",
+//   "netki-approval-add-address",
 //   {}
 // );
 // sendEmail(draft, (err, response) => {
