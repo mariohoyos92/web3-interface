@@ -35,19 +35,21 @@ async function getEverything(req, res) {
       netki_code,
       email,
     )
-    let walletStatus = await Promise.all(wallets.map(async ({ public_eth_address }) => {
 
-      isWhitelisted = await contractInstance.whitelist(public_eth_address);
-      MDXBalance = await tokenInstance.balanceOf(public_eth_address);
-      wanBalance = await getBalance(public_eth_address)
-      transactionHistory = await txHistoryFetcher(public_eth_address)
-      return {
-        address: public_eth_address,
-        isWhitelisted,
-        MDXBalance: Math.floor(MDXBalance / weiPerEth),
-        wanBalance: Math.floor(wanBalance / weiPerEth),
-        transactionHistory
-      }
+    let walletStatus = await Promise.all(wallets.map(({ public_eth_address }) => {
+      return new Promise(async (resolve, reject) => {
+        let isWhitelisted = await contractInstance.whitelist(public_eth_address);
+        let MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+        let wanBalance = await getBalance(public_eth_address)
+        let transactionHistory = await txHistoryFetcher(public_eth_address)
+        resolve({
+          address: public_eth_address,
+          isWhitelisted,
+          MDXBalance: MDXBalance.dividedBy(weiPerEth).toNumber(),
+          wanBalance: wanBalance / weiPerEth,
+          transactionHistory
+        })
+      })
     }));
     res
       .status(200)
