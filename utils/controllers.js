@@ -60,7 +60,7 @@ async function getEverything(req, res) {
         netkiCode: netki_code
       });
   } catch (e) {
-    console.log(e);
+    console.log("geteverything", e);
     res.status(500).json({ e });
   }
 }
@@ -103,7 +103,7 @@ async function netkiStatusFetcher(req, res) {
       res.status(200).json({ approvalStatus: "Hasn't started netki process" });
     }
   } catch (error) {
-    console.log(error)
+    console.log("netkistatusfetcher", error)
     res.status(500).json({ error: error.message });
   }
 }
@@ -113,6 +113,7 @@ async function getCrowdSaleStats(req, res) {
     const stats = await statsFetcher();
     res.status(200).json(stats);
   } catch (e) {
+    console.log("crowdsale stats", e)
     res.status(500).json({
       error: e.message
     });
@@ -138,13 +139,14 @@ async function registerUser(req, res) {
           if (err) {
             res.status(500).json({ error: err });
           } else {
-            res.status(200).json({ response });
+            res.status(200).json({ response, netkiCode });
           }
         });
         break;
       }
     }
   } catch (e) {
+    console.log("register user", e)
     res.status(500).json({ error: e });
   }
 }
@@ -155,6 +157,7 @@ async function getUserProfile(req, res) {
     const profile = await getUserByEmail(email);
     res.status(200).json({ profile });
   } catch (error) {
+    console.log("get profile ", e)
     res.status(500).json({
       error
     });
@@ -177,7 +180,7 @@ async function addAddressToProfile(req, res) {
       res.status(200).json({ updatedUser });
     }
   } catch (e) {
-    console.log(e);
+    console.log("addAddressToprofile", e);
     res.status(500).json({ error: e });
   }
 }
@@ -196,6 +199,7 @@ async function checkIfWhitelisted(req, res) {
       isWhitelisted
     });
   } catch (e) {
+    console.log("check if whitelisted", e)
     res.status(500).json({
       error: e.message
     });
@@ -221,6 +225,7 @@ async function getTransactionHistory(req, res) {
     })))
     res.status(200).json({ transactionHistory })
   } catch (e) {
+    console.log("get transaction history", e)
     res.status(500).json({ error: e });
   }
 }
@@ -237,6 +242,7 @@ async function getMDXBalance(req, res) {
       MDXBalances
     });
   } catch (e) {
+    console.log("get mdx balance", e)
     res.status(500).json({
       error: e.message
     });
@@ -255,6 +261,7 @@ async function getWanBalance(req, res) {
     const wanBalance = await getBalance(req.params.address);
     res.status(200).json({ wanBalance: Math.floor(wanBalance / weiPerEth) })
   } catch (error) {
+    console.log("get wan balance", error)
     res.status(500).json({ error: error.messgae })
   }
 
@@ -325,7 +332,7 @@ async function handleCallback(req, res) {
 
     // TO DO determine if we want to do anything for HOLD status or anything like that, i don't think it's necessary but could go here.
   } catch (e) {
-    console.log(e);
+    console.log("callback", e);
     res.status(500)
   }
 }
