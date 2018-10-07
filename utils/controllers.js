@@ -26,6 +26,7 @@ const weiPerEth = 1000000000000000000;
 
 async function getEverything(req, res) {
   const { email } = req.params;
+  console.log("geteverythinPARAm", email);
   try {
     const { wallets, netki_code } = await getUserByEmail(email);
     const stats = await statsFetcher();
@@ -252,7 +253,7 @@ async function getMDXBalance(req, res) {
 function checkIfAddressIsValid(req, res) {
   const { address } = req.params;
   address
-    ? res.status(200).json({ isValid: isAddress(address) })
+    ? res.status(200).json({ isValid: true })
     : res.status(500).json({ error: "Please provide address" });
 }
 
