@@ -39,17 +39,28 @@ async function getEverything(req, res) {
 
     let walletStatus = await Promise.all(wallets.map(({ public_eth_address }) => {
       return new Promise(async (resolve, reject) => {
-        let isWhitelisted = await contractInstance.whitelist(public_eth_address);
-        let MDXBalance = await tokenInstance.balanceOf(public_eth_address);
-        let wanBalance = await getBalance(public_eth_address)
-        let transactionHistory = await txHistoryFetcher(public_eth_address)
-        resolve({
-          address: public_eth_address,
-          isWhitelisted,
-          MDXBalance: MDXBalance.dividedBy(weiPerEth).toNumber(),
-          wanBalance: wanBalance / weiPerEth,
-          transactionHistory
-        })
+        try {
+          let isWhitelisted = await contractInstance.whitelist(public_eth_address);
+          let MDXBalance = await tokenInstance.balanceOf(public_eth_address);
+          let wanBalance = await getBalance(public_eth_address)
+          let transactionHistory = await txHistoryFetcher(public_eth_address)
+          resolve({
+            address: public_eth_address,
+            isWhitelisted,
+            MDXBalance: MDXBalance.dividedBy(weiPerEth).toNumber(),
+            wanBalance: wanBalance / weiPerEth,
+            transactionHistory
+          })
+        } catch (error) {
+          console.log("in get everything promise map", error)
+          resolve({
+            address: public_eth_address,
+            isWhitelisted: false,
+            MDXBalance: 0,
+            wanBalance: 0,
+            transactionHistory: []
+          })
+        }
       })
     }));
     res
